@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "mssql": "^11.0.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.7"
+  }
+}
