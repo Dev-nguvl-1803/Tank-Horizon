@@ -1,9 +1,20 @@
 {
+  "name": "tank-horizon",
+  "version": "1.0.0",
+  "description": "Tank horizon with PhaserJS",
+  "main": "build.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node . && node dist/index.js"
+  },
   "dependencies": {
+    "express": "^4.21.2",
     "mssql": "^11.0.1",
+    "phaser": "^3.88.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/mssql": "^9.1.7"
   }
 }

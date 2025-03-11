@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Grid with Random Items</title>
+    <style>
+        body {
+            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveBackground 20s linear infinite;
+            position: relative;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        @keyframes moveBackground {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 500px -500px;
+            }
+        }
+
+        .random-item {
+            position: absolute;
+            width: 20px;
+            height: 15px;
+            z-index: -1;
+            opacity: 0.7;
+            pointer-events: none;
+            transform-origin: center center;
+        }
+
+        @keyframes moveItem {
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            to {
+                transform: translate(50px, 0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Biến toàn cục để theo dõi số lượng item hiện có
+        var activeItems = 0;
+        var maxItems = 5;
+        
+        // Hàm tạo và chèn các item ngẫu nhiên vào trang
+        function addRandomItems() {
+            // Nếu đã đủ số lượng item tối đa, không thêm nữa
+            if (activeItems >= maxItems) {
+                // Kiểm tra lại sau 3 giây
+                setTimeout(addRandomItems, 3000);
+                return;
+            }
+            
+            var images = [
+                'https://cdn.discordapp.com/attachments/1347828535187738727/1348560870434672640/tank.png?ex=67cfe8ae&is=67ce972e&hm=daa00c85bbf73bd8a947946f3a5e996919d3e438b363088d6087518e3afbed49&'
+            ];
+            
+            // Thêm 1 item (tối đa đến maxItems)
+            var numberOfItems = Math.min(1, maxItems - activeItems);
+            activeItems += numberOfItems;
+
+            for (var i = 0; i < numberOfItems; i++) {
+                var item = document.createElement('img');
+                item.src = images[Math.floor(Math.random() * images.length)];
+                item.className = 'random-item';
+                
+                // Chọn ngẫu nhiên điểm xuất phát
+                // 0: top, 1: right, 2: bottom, 3: left
+                var startPosition = Math.floor(Math.random() * 4);
+                var endPosition = (startPosition + 2) % 4; // Đối diện
+                
+                var startX, startY, endX, endY;
+                
+                // Tính toán điểm bắt đầu và kết thúc
+                switch(startPosition) {
+                    case 0: // top
+                        startX = Math.random() * window.innerWidth;
+                        startY = -50;
+                        break;
+                    case 1: // right
+                        startX = window.innerWidth + 50;
+                        startY = Math.random() * window.innerHeight;
+                        break;
+                    case 2: // bottom
+                        startX = Math.random() * window.innerWidth;
+                        startY = window.innerHeight + 50;
+                        break;
+                    case 3: // left
+                        startX = -50;
+                        startY = Math.random() * window.innerHeight;
+                        break;
+                }
+                
+                switch(endPosition) {
+                    case 0: // top
+                        endX = Math.random() * window.innerWidth;
+                        endY = -50;
+                        break;
+                    case 1: // right
+                        endX = window.innerWidth + 50;
+                        endY = Math.random() * window.innerHeight;
+                        break;
+                    case 2: // bottom
+                        endX = Math.random() * window.innerWidth;
+                        endY = window.innerHeight + 50;
+                        break;
+                    case 3: // left
+                        endX = -50;
+                        endY = Math.random() * window.innerHeight;
+                        break;
+                }
+                
+                item.style.left = startX + 'px';
+                item.style.top = startY + 'px';
+                
+                // Xác định hướng và tốc độ xoay ngẫu nhiên
+                var initialRotation = Math.random() * 360; // Góc xoay ban đầu ngẫu nhiên (0-360 độ)
+                var rotationDirection = Math.random() > 0.5 ? 1 : -1; // 1 là theo chiều kim đồng hồ, -1 là ngược chiều
+                var rotationAmount = rotationDirection * (360 + Math.random() * 720); // 1-3 vòng theo hướng ngẫu nhiên
+                
+                // Tạo animation di chuyển và xoay xuyên qua màn hình
+                var duration = 15 + Math.random() * 10; // 15-25s
+                var uniqueId = new Date().getTime() + Math.random().toString(16).slice(2);
+                
+                // Thiết lập góc xoay ban đầu
+                item.style.transform = `rotate(${initialRotation}deg)`;
+                
+                // Tạo animation kết hợp di chuyển và xoay
+                var styleSheet = document.createElement("style");
+                styleSheet.innerHTML = `
+                    @keyframes moveAndRotate${uniqueId} {
+                        from {
+                            transform: translate(0, 0) rotate(${initialRotation}deg);
+                        }
+                        to {
+                            transform: translate(${endX - startX}px, ${endY - startY}px) rotate(${initialRotation + rotationAmount}deg);
+                        }
+                    }
+                `;
+                document.head.appendChild(styleSheet);
+                
+                // Áp dụng animation
+                item.style.animation = `moveAndRotate${uniqueId} ${duration}s linear forwards`;
+                
+                document.body.appendChild(item);
+                
+                // Xóa item sau khi animation kết thúc
+                setTimeout(function(element) {
+                    if (element && element.parentNode) {
+                        element.parentNode.removeChild(element);
+                        activeItems--; // Giảm số lượng item đang hoạt động
+                    }
+                }, duration * 1000, item);
+            }
+            
+            // Tạo item tiếp theo sau một khoảng thời gian ngẫu nhiên
+            var nextItemDelay = 5000 + Math.random() * 8000; // 5-13 giây
+            setTimeout(addRandomItems, nextItemDelay);
+        }
+        
+        // Gọi hàm để chèn item ngẫu nhiên khi trang được tải
+        window.onload = function() {
+            // Kiểm tra xem hình ảnh có tải được không
+            var testImage = new Image();
+            testImage.onload = function() {
+                console.log("Image loaded successfully");
+                // Khởi tạo việc thêm item đầu tiên sau 1 giây
+                setTimeout(addRandomItems, 1000);
+            };
+            testImage.onerror = function() {
+                console.error("Error loading image. Using fallback.");
+                // Sử dụng hình ảnh thay thế nếu URL không hoạt động
+                setTimeout(function() {
+                    addFallbackItems();
+                }, 1000);
+            };
+            testImage.src = 'https://media.discordapp.net/attachments/1288304075879743580/1348143325903061014/oMDlNL8.png?ex=67ce63d0&is=67cd1250&hm=2ca3ec492217bd0a33f67f1b62f1c7f8727d7f94be9f594fd8251200d6dc075e&=&format=webp&quality=lossless&width=36&height=24';
+        };
+        
+        // Hàm tạo fallback items nếu không tải được hình ảnh
+        function addFallbackItems() {
+            if (activeItems >= maxItems) {
+                setTimeout(addFallbackItems, 3000);
+                return;
+            }
+            
+            var item = document.createElement('div');
+            item.textContent = "●";
+            item.className = 'random-item';
+            item.style.fontSize = "20px";
+            item.style.color = "rgba(0,0,0,0.5)";
+            
+            // Tương tự như code xử lý item hình ảnh
+            // Nhưng sử dụng cho fallback
+            
+            activeItems++;
+            document.body.appendChild(item);
+            
+            // Logic tương tự phần còn lại của addRandomItems()
+            // ...
+        }
+    </script>
+</body>
+</html>
