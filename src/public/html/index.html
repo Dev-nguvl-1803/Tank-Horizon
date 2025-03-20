@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tank-Horizon - Socket Test</title>
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu">
+            <h1>Tank-Horizon Socket Test</h1>
+            <div id="socket-info">
+                <p>Socket A Status: <span id="socket-a-status">Đang kết nối...</span></p>
+                <p>Socket B Status: <span id="socket-b-status">Đang kết nối...</span></p>
+            </div>
+            <div id="create-game">
+                <h2>Tạo phòng mới (Socket A)</h2>
+                <input type="text" id="newName" placeholder="Nhập tên của bạn" maxlength="15" required>
+                <button id="newGame">Tạo phòng</button>
+            </div>
+            <div id="join-game">
+                <h2>Tham gia phòng (Socket A)</h2>
+                <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
+                <input type="text" id="joinId" placeholder="Nhập ID phòng" maxlength="10" required>
+                <button id="joinGame">Tham gia</button>
+            </div>
+            <div id="room-actions">
+                <h2>Hành động phòng (Socket A)</h2>
+                <button id="getRoom">Xem thông tin phòng</button>
+                <button id="spectateGame">Xem trận đấu</button>
+            </div>
+            <div id="log-container">
+                <h3>Socket Event Log</h3>
+                <div id="socket-direction">
+                    <button id="show-a-to-b">Socket A → B</button>
+                    <button id="show-b-to-c">Socket B → C</button>
+                    <button id="show-all">Tất cả sự kiện</button>
+                </div>
+                <pre id="eventLog"></pre>
+            </div>
+        </div>
+        <div id="game" style="display: none;">
+            <div id="room-info">
+                <div>
+                    <p>Room ID: <span id="roomId"></span></p>
+                    <p>Players: <span id="playerCount">0</span></p>
+                </div>
+                <div id="host-controls" style="display: none;">
+                    <button id="start-game">Bắt đầu trận đấu</button>
+                </div>
+                <div>
+                    <p>Đạn còn lại: <span id="bullet-count">5</span></p>
+                    <p>Điểm số: <span id="score">0</span></p>
+                </div>
+            </div>
+            <div id="game-controls">
+                <p>Điều khiển: Phím mũi tên để di chuyển, Space để bắn</p>
+            </div>
+            <div id="phaser-game"></div>
+            <button id="back-to-menu">Trở về Menu</button>
+        </div>
+    </div>
+
+    <!-- Script load theo thứ tự: Socket.IO, Phaser, Socket A, Socket C -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <!-- Sử dụng các file TypeScript đã được biên dịch -->
+    <script src="../js/socket-a.js"></script>
+    <script src="../js/socket-c.js"></script>
+</body>
+</html>

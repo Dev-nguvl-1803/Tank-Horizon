@@ -1,16 +1,14 @@
 {
   "name": "tank-horizon",
   "version": "1.0.0",
-  "description": "Tank horizon with PhaserJS",
+  "description": "Tank bumbumb",
   "main": "build.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node . && node dist/index.js"
+    "d": "node build.js && node dist/server/server.js"
   },
   "dependencies": {
     "express": "^4.21.2",
     "mssql": "^11.0.1",
-    "phaser": "^3.88.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
