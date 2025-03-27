@@ -1,0 +1,288 @@
+html, body {
+    height: 100%;
+    margin: 0;
+  }
+  
+  body {
+    background-image: linear-gradient(to right, rgba(219, 207, 207, 1) 1px, transparent 1px), /**tao line trai**/
+                      linear-gradient(to bottom, rgba(219, 207, 207, 1) 1px, transparent 1px); /**tao line ngang**/
+    background-size: 50px 50px;
+    animation: moveBackground 20s linear infinite; /*animation di chuyen*/
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+  }  /*Phan overflow, margin, padding, width, height hoi Nam, no chac lam cai phan nay*/
+  
+  @keyframes moveBackground {
+    from {
+      background-position: 0 0; /*Vi tri background*/
+    }
+    to {
+      background-position: -1000px -1000px; /*Toc do di chuyen background */
+    }
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  /* Vi tri content chinh gom 3 nut se de o giua */
+  }
+  
+  .button{
+    font-family: Arial, Helvetica, sans-serif; /*font chu*/
+    font-weight: bold; /*de dam*/
+    background-color: #C1BCB6; /* gray */
+    color: white; /*set text yea*/
+    padding: 15px 0;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 8px; /*cai nay lam smooth cai button*/
+    border: 2px solid 000000; /*vien mau cua button*/
+    margin: 10px; /*space cua button*/
+    width: 200px;
+    height: 50px;
+    transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
+  }
+  
+  .button:hover { /*hover cua button*/
+    color: rgb(199, 198, 198);
+  }
+  
+  .button:active {
+    background-color: #454845;
+    box-shadow: 0 5px #666;
+    transform: translateY(4px);
+  }
+  
+  .logo {
+    max-width: 750px;
+    width: 100%;
+    margin-top: 20px;  /* Vi tri logo de top-center */
+  }
+  
+  .settinglogo{
+    position: absolute;
+    max-width: 75px;
+    right: 45px; /*day xa sang ben phai mot ti nua*/
+    margin-top: 35px; /*day xa cai setting xuong mot ti nua*/
+  }
+    
+  .leaderboardbox{
+    font-family: Arial, Helvetica, sans-serif; /*font chu*/
+    font-weight: bold; /*de dam*/
+    background-color: #8E8984; /* gray */
+    color: white; /*set text yea*/
+    font-size: 16px;
+    border-radius: 8px; /*cai nay lam smooth cai button*/
+    border: 2px solid #000000; /*vien mau cua button*/
+    width: 173px;
+    height: 220px;
+    position: absolute;
+    top: 250px;
+    left: 25px;
+  }
+  
+  .settings-window {
+    font-family: Arial, Helvetica, sans-serif; /*font chu*/
+    font-weight: bold; /*de dam*/
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 20px;
+    color: #8E8984; /*set text yea*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #DBD6CF;
+    padding: 40px 80px;
+    border-radius: 8px;
+    border: 2px solid #000000;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10; 
+  }
+
+  .settings-window button{
+    background-color: #B8B8B8;
+    position: absolute;
+    left: 25px;
+    top: 25px;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    height: 46px;
+    cursor: pointer; /* Makes it behave like a button */
+}
+
+  .hidden {
+    display: none;
+  }
+
+  #sound-volume {
+    -webkit-appearance: none;
+    width: 170px;
+    height: 8px;
+    border-radius: 10px;
+    background: #8E8984;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+  }
+  
+  #sound-volume:hover {
+    opacity: 1;
+  }
+
+  #sound-volume::-moz-range-thumb {
+    background-color: #8E8984;
+  }
+
+  #sound-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #8E8984;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /*Cai nay la cho anh di chuyen ngau nhien tren map css*/
+  .random-item {
+    position: absolute;
+    width: 175px;
+    height: 100px;
+    z-index: -1;
+    opacity: 0.7;
+    pointer-events: none;
+    transform-origin: center center;
+  }
+  
+  @keyframes moveItem {
+    from {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    to {
+        transform: translate(50px, 0) rotate(360deg);
+    }
+  }
+
+
+
+.center-container {
+  font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    width: 2000px;
+    bottom: 15px;
+    left: 150px
+}
+
+.outer-container {
+    width: 60%;
+    background: #DBD6CF;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border: 2px solid black;
+    position: relative;
+    text-align: left;
+}
+
+.inner-container {
+    background: #ECE6DE;
+    padding: 5px;
+    border-radius: 10px;
+    color: #8E8984;
+    text-align: center;
+    border: 2px solid black;
+}
+
+.back-button {
+    height: 80px;
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    cursor: pointer;
+    font-size: 40px;
+}
+
+.tank {
+    position: absolute;
+    top: -100px;
+    left: 37%;
+    width: 60px;
+}
+
+.tank-horizon {
+    position: absolute;
+    top: -110px;
+    left: 620px;
+    transform: translateX(-50%);
+    width: 500px;
+    height: auto;
+    
+}
+
+.team {
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.member-list {
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 10%;
+    font-size: 25px;
+}
+
+.music {
+  font-family: 'Inter', sans-serif;
+    font-size: 30px;
+    margin-top: 10px;
+}
+
+.music-list {
+  font-family: 'Inter', sans-serif;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 10%;
+    font-size: 25px;
+}
+
+.social-icons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px; /* Adds spacing between icons */
+}
+
+.social-icons a {
+  display: inline-block;
+}
+
+.social-icons img {
+  width: 30px; /* Reduce the size */
+  height: auto;
+}
+
+.credit-text {
+    text-align: left;
+    margin-left: 5px;
+    color: #8E8984;
+    font-size: 15px;
+}
