@@ -117,10 +117,10 @@ html, body {
 
   .close-btn {
     position: absolute;
-    top: 8px;
-    left: 10px;
+    top: 23px;
+    left: 25px;
     height: 46px;
-    cursor: pointer; /* Makes it behave like a button */
+    cursor: pointer; 
 }
 
   .hidden {
@@ -177,10 +177,8 @@ html, body {
     }
   }
 
-
-
 .center-container {
-  font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -285,4 +283,171 @@ html, body {
     margin-left: 5px;
     color: #8E8984;
     font-size: 15px;
+}
+
+/* neu la id = dung #element
+neu la class = dung .element*/
+#HelloWorld{
+  font-family: Inter, sans-serif;
+  font: bold;
+  padding-top: 35px;
+  padding-right: 25px;
+  text-align: right;
+  font-size: 50px;
+  color: #8E8984;
+}
+
+#Description{
+  font-family: Inter, sans-serif;
+  font: bold;
+  padding-right: 25px;
+  text-align: right;
+  color: #8E8984;
+}
+
+#windowTaoPhong{
+  font-family: Inter, sans-serif;
+  font: bold;
+  color: #8E8984;
+  background-color: #F0EAE4;
+  width: 450px;
+  border: 2px solid #000000;
+  border-radius: 15px;
+  padding: 60px;
+  margin: 20px;
+  position: relative;
+  bottom: 80px;
+  left: 120px;
+}
+
+#windowTaoPhong button{
+  position: absolute;
+  right: 20px;
+  bottom: 25px;
+  background-color: #F0EAE4;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  width: 80px;
+  height: 30px;
+  transition-duration: 0.4s;
+}
+
+#windowTaoPhong button:hover{
+  color: rgb(199, 198, 198);
+}
+
+#windowTaoPhong button:active {
+  background-color: #F0EAE4;
+  box-shadow: 0 5px #F0EAE4;
+  transform: translateY(4px);
+}
+
+#windowKhanGia button:hover{
+  color: rgb(199, 198, 198);
+}
+
+#windowKhanGia button:active {
+  background-color: #F0EAE4;
+  box-shadow: 0 5px #F0EAE4;
+  transform: translateY(4px);
+}
+
+#windowThamGiaPhong button:hover{
+  color: rgb(199, 198, 198);
+}
+
+#windowThamGiaPhong button:active {
+  background-color: #F0EAE4;
+  box-shadow: 0 5px #F0EAE4;
+  transform: translateY(4px);
+}
+
+#buttonContainer {
+  display: flex;
+  justify-content: space-between; /* Spaces buttons evenly */
+  gap: 10px;
+  margin-top: 10px; /* Add space between inputs and buttons */
+}
+
+#windowThamGiaPhong button {
+  position: static; /* Remove absolute positioning */
+  width: auto;
+  padding: 8px 12px;
+  background-color: #F0EAE4;
+  border: 1px solid #000;
+  border-radius: 8px;
+  cursor: pointer;
+  gap: 10px;
+  transition-duration: 0.4s;
+}
+
+#windowKhanGia button{
+  position: absolute;
+  right: 20px;
+  bottom: 25px;
+  background-color: #F0EAE4;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  width: 80px;
+  height: 30px;
+  transition-duration: 0.4s;
+}
+
+#NhapTen {
+  font-family: Inter, sans-serif;
+  font-weight: bold;
+  color: #8E8984;
+}
+
+#KhanGia {
+  font-family: Inter, sans-serif;
+  font-weight: bold;
+  color: #8E8984;
+}
+
+#ThamGia {
+  font-family: Inter, sans-serif;
+  font-weight: bold;
+  color: #8E8984;
+}
+
+#windowThamGiaPhong{
+  font-family: Inter, sans-serif;
+  font: bold;
+  color: #8E8984;
+  background-color: #F0EAE4;
+  width: 450px;
+  border: 2px solid #000000;
+  border-radius: 15px;
+  padding: 60px;
+  margin: 20px;
+  position: absolute;
+  bottom: 200px;
+  right: 100px;
+}
+
+input[type=text], select {
+  width: 48%;
+  padding: 12px;
+  margin: 8px 0;
+  background-color: #ECE6DE;
+  display: inline-block;
+  border: 1px solid #000000;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+#windowKhanGia{
+  font-family: Inter, sans-serif;
+  font: bold;
+  color: #8E8984;
+  background-color: #F0EAE4;
+  width: 450px;
+  border: 2px solid #000000;
+  border-radius: 15px;
+  padding: 60px;
+  margin: 20px;
+  position: relative;
+  top: -30px;
+  left: 120px;
 }

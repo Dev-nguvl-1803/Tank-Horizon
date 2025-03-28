@@ -19,10 +19,11 @@
             <h3>Cài đặt</h3>
             <label>
                 Cài đặt nút bấm:
-                <h4>Âm Lượng: <input type="range" min="0" max="100" value="100" id="sound-volume"></h4>
+                <h4>Âm Lượng: <input type="range" min="0" max="100" value="16" id="sound-volume"></h4>
             </label>
         </div>
         <button class="button" id="btnCredit">Nhà sáng tạo</button>
+        <button class="button" id="Test-Event">Test Event Socket</button>
         <div class="leaderboardbox">
             <h2>Bảng xếp hạng</h2>
             <table>
@@ -87,7 +88,7 @@
     </div>
 
     <audio id="background-music" loop>
-        <source src="TD.mp3" type="audio/mpeg">
+        <source src="lofi.mp3" type="audio/mpeg">
         Your browser does not support the audio tag.
     </audio>
 
@@ -145,6 +146,34 @@
             </div>
             <div id="phaser-game"></div>
             <button id="back-to-menu">Trở về Menu</button>
+        </div>
+    </div>
+
+    <div id="play" style="display: none;">
+            <img src="finally.png" id="close-play" class="close-btn" alt="Close">
+        <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
+        <div id="Description">Chọn các chế độ chơi của bạn</div>
+        <div id="windowTaoPhong" class="TaoPhong">
+            <h2>Tạo phòng chơi mới</h2>
+            <div id="NhapTen">Tên người chơi:</div>
+            <input type="text" id="newName" placeholder="Nhập tên của bạn:" maxlength="15" required>
+            <button id="newGame">Tạo phòng</button>
+        </div>
+        <div id="windowThamGiaPhong" class="TaoPhong">
+            <h2>Tham gia phòng chơi</h2>
+            <div id="ThamGia">Tên người chơi:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mã phòng:</div>
+            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
+            <div id="btnContain">
+            <button id="joinGame">Tự động tham gia</button>
+            <button id="joinGame">Tham gia ngay</button>
+        </div>
+        </div>
+        <div id="windowKhanGia" class="TaoPhong">
+            <h2>Chế độ khán giả</h2>
+            <div id="KhanGia">Mã phòng:</div>
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
+            <button id="spectateGame">Xem ngay</button>
         </div>
     </div>
 
