@@ -1,17 +1,11 @@
-const { exec } = require('child_process');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
-fs.rmdirSync('./dist', { recursive: true, force: true });
+const distDir = 'dist';
 
-exec('tsc', (err, stdout, stderr) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    console.log(stdout);
-    if (stderr) {
-        console.error(stderr);
-    }
+if (fs.existsSync(distDir)) {
+    fs.rmdirSync(distDir, { recursive: true });
+}
 
-    console.log("Build completed successfully.");
-});
+execSync('tsc');
+console.log('Build successful!');
