@@ -183,9 +183,9 @@ html, body {
     flex-direction: column;
     justify-content: center;
     position: absolute;
-    width: 2000px;
-    bottom: 15px;
-    left: 150px
+    width: 90%;
+    bottom: 15%;
+    left: 22.5%;
 }
 
 .outer-container {
@@ -226,10 +226,10 @@ html, body {
 
 .tank-horizon {
     position: absolute;
-    top: -110px;
-    left: 620px;
+    top: -200px;
+    left: 30%;
     transform: translateX(-50%);
-    width: 500px;
+    width: 900px;
     height: auto;
     
 }
