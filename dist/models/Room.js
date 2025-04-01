@@ -13,6 +13,7 @@ class Room {
     _powerups = [];
     _powerupInterval = null;
     _inCheckFunc = 0;
+    _isResetting = false; // Thêm cờ trạng thái reset
     _socket;
     _io;
     _settings;
@@ -22,6 +23,116 @@ class Room {
         this._socket = socket;
         this._settings = settings;
         this._map = this.generateRandomMap(type);
+    }
+    // Quản lý đạn trong phòng
+    _bullets = [];
+    _bulletUpdateInterval = null;
+    // Khởi tạo hệ thống xử lý vật lý đạn
+    initBulletPhysics() {
+        // Hủy interval cũ nếu có
+        if (this._bulletUpdateInterval) {
+            clearInterval(this._bulletUpdateInterval);
+        }
+        // Cập nhật vật lý đạn 60 lần mỗi giây (16.67ms)
+        this._bulletUpdateInterval = setInterval(() => {
+            this.updateBullets();
+        }, 16);
+    }
+    // Thêm đạn mới vào phòng
+    addBullet(bullet) {
+        this._bullets.push(bullet);
+        // Khởi động hệ thống vật lý đạn nếu chưa chạy
+        if (!this._bulletUpdateInterval) {
+            this.initBulletPhysics();
+        }
+    }
+    // Cập nhật vị trí và xử lý va chạm của tất cả đạn
+    updateBullets() {
+        // Danh sách đạn cần xóa
+        const bulletsToRemove = [];
+        // Danh sách cập nhật vị trí đạn để gửi cho client
+        const bulletUpdates = [];
+        // Danh sách va chạm đạn với người chơi
+        const bulletHits = [];
+        // Xử lý từng viên đạn
+        for (let i = 0; i < this._bullets.length; i++) {
+            const bullet = this._bullets[i];
+            // Kiểm tra nếu đạn hết thời gian sống
+            if (bullet.isExpired()) {
+                bulletsToRemove.push(bullet.id);
+                continue;
+            }
+            // Cập nhật vị trí đạn
+            bullet.update();
+            // Kiểm tra va chạm với tường
+            const hitWall = bullet.checkWallCollision(this._map.walls);
+            // Kiểm tra va chạm với người chơi
+            const hitPlayerId = bullet.checkPlayerCollision(this._players);
+            if (hitPlayerId) {
+                // Ghi nhận va chạm đạn với người chơi
+                bulletHits.push({
+                    bulletId: bullet.id,
+                    victimId: hitPlayerId,
+                    killerId: bullet.ownerId
+                });
+                // Đánh dấu đạn cần xóa
+                bulletsToRemove.push(bullet.id);
+            }
+            // Thêm vào danh sách cập nhật
+            bulletUpdates.push(bullet.toJSON());
+        }
+        // Xóa các đạn cần xóa
+        if (bulletsToRemove.length > 0) {
+            this._bullets = this._bullets.filter(bullet => !bulletsToRemove.includes(bullet.id));
+            // Gửi thông báo về việc xóa đạn
+            this._io.to(this._id).emit('removeBullets', bulletsToRemove);
+            // Thông báo cho người chơi mà đạn biến mất (để có thể bắn thêm đạn)
+            const bulletOwners = new Set(bulletsToRemove.map(id => {
+                const bullet = this._bullets.find(b => b.id === id);
+                return bullet ? bullet.ownerId : null;
+            }).filter(id => id !== null));
+            bulletOwners.forEach(ownerId => {
+                if (ownerId) {
+                    this._socket.to(ownerId).emit('bulletDestroyed', ownerId);
+                }
+            });
+        }
+        // Xử lý va chạm đạn với người chơi
+        for (const hit of bulletHits) {
+            const victimIndex = this.getPlayerIndex(hit.victimId);
+            const killerIndex = this.getPlayerIndex(hit.killerId);
+            if (victimIndex !== -1) {
+                // Gửi thông báo người chơi bị trúng đạn
+                this._io.to(this._id).emit('playerDied', {
+                    victimId: hit.victimId,
+                    killerId: hit.killerId
+                });
+            }
+        }
+        // Gửi cập nhật vị trí đạn cho client nếu có đạn
+        if (bulletUpdates.length > 0) {
+            this._io.to(this._id).emit('updateBullets', bulletUpdates);
+        }
+        // Nếu không còn đạn nào, dừng hệ thống vật lý đạn
+        if (this._bullets.length === 0 && this._bulletUpdateInterval) {
+            clearInterval(this._bulletUpdateInterval);
+            this._bulletUpdateInterval = null;
+        }
+    }
+    // Xóa tất cả đạn trong phòng
+    clearBullets() {
+        // Dừng hệ thống vật lý đạn
+        if (this._bulletUpdateInterval) {
+            clearInterval(this._bulletUpdateInterval);
+            this._bulletUpdateInterval = null;
+        }
+        // Xóa tất cả đạn
+        if (this._bullets.length > 0) {
+            const bulletIds = this._bullets.map(bullet => bullet.id);
+            this._bullets = [];
+            // Thông báo xóa tất cả đạn cho client
+            this._io.to(this._id).emit('removeBullets', bulletIds);
+        }
     }
     // Getters
     get id() {
@@ -97,60 +208,6 @@ class Room {
             player.color = "purple";
         }
     }
-    // Quản lý vòng chơi
-    checkNewRound(type) {
-        let alivePlayers = 0;
-        for (const p of this.players) {
-            if (p.alive) {
-                ++alivePlayers;
-            }
-        }
-        if (alivePlayers <= 1) {
-            ++this._inCheckFunc;
-            setTimeout(() => {
-                if (this._inCheckFunc > 1) {
-                    --this._inCheckFunc;
-                    return;
-                }
-                // Cộng điểm cho người thắng
-                for (const p of this.players) {
-                    if (p.alive) {
-                        const playerIndex = this._players.indexOf(p);
-                        this._players[playerIndex].score += 100;
-                        // Kiểm tra điều kiện thắng
-                        if (this._players[playerIndex].score >= this._settings.pointsToWin) {
-                            this._io.to(this._id).emit('gameOver', {
-                                winner: this._players[playerIndex],
-                                players: this._players
-                            });
-                            // Dọn dẹp phòng hoặc chuẩn bị vòng mới
-                            this.prepareNewGame();
-                            return;
-                        }
-                    }
-                }
-                this.newRound(type);
-                --this._inCheckFunc;
-            }, 5000);
-        }
-    }
-    newRound(type) {
-        ++this._round;
-        // Tạo bản đồ mới
-        this._map = this.generateRandomMap(type);
-        // Đặt lại trạng thái người chơi
-        for (const p of this._players) {
-            p.spawn();
-        }
-        // Xóa tất cả powerups hiện tại
-        this._powerups = [];
-        // Thông báo vòng mới
-        this._io.to(this._id).emit('newRound', {
-            round: this._round,
-            map: this._map,
-            players: this._players
-        });
-    }
     // Quản lý powerup
     powerupSpawner() {
         if (this._powerupInterval) {
@@ -184,19 +241,36 @@ class Room {
     }
     // Chuẩn bị trò chơi mới
     prepareNewGame() {
-        this._round = 1;
+        // Kiểm tra nếu đang trong quá trình reset, bỏ qua
+        if (this._isResetting) {
+            console.log('Reset already in progress, skipping...');
+            return;
+        }
+        this._isResetting = true; // Đặt cờ trạng thái
+        this._round += 1;
         this._gameInProgress = false;
-        // Reset điểm số người chơi
+        // Tạo map mới một lần
+        const newMap = this.generateRandomMap("ok");
+        this._map = newMap;
+        // Reset trạng thái người chơi nhưng chưa tạo vị trí spawn
+        // Vị trí spawn sẽ được xác định ở phía client để đảm bảo không bị kẹt tường
         for (const p of this._players) {
-            p.score = 0;
             p.alive = true;
             p.ready = false;
+            // Không tạo vị trí spawn ở đây
         }
-        // Thông báo chuẩn bị trò chơi mới
+        // Gửi cùng một map cho tất cả client
         this._io.to(this._id).emit('prepareNewGame', {
             roomId: this._id,
-            players: this._players
+            players: this._players.map(p => p.toJSON()),
+            map: this._map,
+            round: this._round
         });
+        // Reset cờ trạng thái sau 1 giây
+        setTimeout(() => {
+            this._isResetting = false;
+            console.log("Reset flag cleared");
+        }, 1000);
     }
     // Cập nhật người chơi điểm cao nhất
     updateHighScorePlayer() {
@@ -282,7 +356,7 @@ class Room {
         }
         return {
             walls,
-            spawns,
+            // spawns,
             board, // Lưu lại board gốc để có thể sử dụng sau này
             size: {
                 width: 10 * tileSize,
@@ -301,6 +375,10 @@ class Room {
             gameInProgress: this._gameInProgress,
             powerups: this._powerups
         };
+    }
+    // Kiểm tra xem phòng có đang trong quá trình reset không
+    isResetting() {
+        return this._isResetting;
     }
 }
 exports.Room = Room;

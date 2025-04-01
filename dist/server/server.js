@@ -68,9 +68,9 @@ app.use('/js', express_1.default.static(path_1.default.join(publicPath, 'js'), {
     }
 }));
 app.use('/assets', express_1.default.static(path_1.default.join(publicPath, 'assets')));
+const playerDbs = new Map();
 // Tuyến đường chính
 app.get('/', (req, res) => {
-    console.log('Attempting to serve index.html from:', htmlPath);
     res.sendFile(path_1.default.join(htmlPath, 'index.html'));
 });
 server.listen(8080, () => {
@@ -88,6 +88,17 @@ async function initializeDb() {
     }
 }
 initializeDb();
+app.get('/sql', (req, res) => {
+    pool.request()
+        .query('SELECT * FROM WHATHEFUCK') // EDIT PLS
+        .then(result => {
+        res.json({ res: result.recordset });
+    })
+        .catch(err => {
+        console.error('SQL error', err);
+        res.status(500).send({ res: 'Error executing query' });
+    });
+});
 // Nối mạng 🙏
 /**
  * Goal:
@@ -105,11 +116,14 @@ const globalSettings = {
 const roomIds = []; // Lưu trữ id của các phòng chơi
 const rooms = {}; // Lưu trữ các phòng chơi
 // Tìm phòng chơi đang hoạt động ===============================
-const getRoom = (playerId) => {
+const getRoom = (id, isRoomId) => {
+    if (isRoomId) {
+        return rooms[id] ? id : undefined;
+    }
     let roomId;
     Object.keys(rooms).forEach(key => {
         for (const player of rooms[key].players) {
-            if (playerId === player.id) {
+            if (id === player.id) {
                 roomId = key;
                 return;
             }
@@ -240,12 +254,12 @@ io.on('connection', (socket) => {
             });
         }
     });
-    socket.on('getRoom', () => {
+    socket.on('getRoom', (data) => {
         /**
          * Goal:
          * - Lấy thông tin phòng chơi
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(data.id, data.isRoom);
         if (roomId) {
             socket.emit('sendRoom', {
                 roomId: roomId,
@@ -264,7 +278,7 @@ io.on('connection', (socket) => {
          *  +> Nếu không phải thì thông báo không có quyền
          *  + Thực hiện kiểm tra số lượng người chơi để bắt đầu
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId)
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -291,7 +305,7 @@ io.on('connection', (socket) => {
          * - Xử lý khi người chơi chủ động rời phòng
          * - Tương tự như xử lý disconnect nhưng là chủ động
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId || !rooms[roomId])
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -333,7 +347,7 @@ io.on('connection', (socket) => {
          * - Nếu người chơi là host thì chuyển host mới
          * - Xóa phòng khi out hết người chơi
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId || !rooms[roomId])
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -372,7 +386,7 @@ io.on('connection', (socket) => {
           * - Cập nhật vị trí và hướng của người chơi
           * - Thông báo cho những người chơi khác về vị trí mới của người chơi
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId)
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -386,12 +400,10 @@ io.on('connection', (socket) => {
     socket.on('sendBullet', (data) => {
         /**
          * Goal:
-         * - Lấy thông tin phòng + vị trí xy người chơi và góc bắn
-         * - Kiểm tra số lượng đạn hiện tại của người chơi (không vượt quá giới hạn)
-         * - Đạn sẽ xuất hiện tại ví trí của người chơi và di chuyển theo hướng của hitbox người chơi
-         * - Thông báo cho tất cả người chơi về viên đạn mới
+         * - Xử lý bắn đạn từ phía server để đồng bộ vật lý đạn giữa các client
+         * - Chỉ tạo đạn trên server, client chỉ hiển thị đạn theo dữ liệu từ server
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId)
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -402,16 +414,21 @@ io.on('connection', (socket) => {
             socket.emit('bulletLimitReached', globalSettings.maxBullets);
             return;
         }
+        // Tạo đạn mới
         const bullet = new Bullet_1.Bullet(data.x, data.y, data.angle, roomId, player.id, data.powerup);
+        // Tăng số đạn hiện tại của người chơi
         rooms[roomId].players[playerIndex].bulletCount++;
-        io.to(roomId).emit('renderBullet', bullet);
+        // Thêm đạn vào phòng để xử lý vật lý từ server
+        rooms[roomId].addBullet(bullet);
+        // Gửi thông tin đạn ban đầu cho tất cả client để hiển thị
+        io.to(roomId).emit('renderBullet', bullet.toJSON());
     });
     socket.on('bulletDestroyed', (bulletOwnerId) => {
         /**
          * Goal:
          * - Khi đạn di chuyển đã hết thời gian di chuyển và biến mất, thêm lại đạn cho người chơi
          */
-        const roomId = getRoom(bulletOwnerId);
+        const roomId = getRoom(bulletOwnerId, false);
         if (!roomId)
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(bulletOwnerId);
@@ -424,54 +441,88 @@ io.on('connection', (socket) => {
             });
         }
     });
-    socket.on('playerDied', (killerId) => {
-        /**
-         * Goal:
-         * - Khi người chơi bị giết, kiểm tra xem người giết có phải người chơi khác không
-         * - Nếu có thì tăng điểm cho người giết và kiểm tra điểm số để kết thúc game
-         * - Nếu không thì thông báo người chơi đã chết và đưa vào chế độ spectate
-         */
-        const roomId = getRoom(socket.id);
+    socket.on('playerDied', (data) => {
+        const roomId = getRoom(socket.id, false);
         if (!roomId)
             return;
+        const victimIndex = rooms[roomId].getPlayerIndex(data.victimId);
+        const killerIndex = rooms[roomId].getPlayerIndex(data.killerId);
+        if (victimIndex === -1)
+            return;
+        const datas = playerDbs.get(roomId);
+        if (datas) {
+            if (datas.round == rooms[roomId].round && data.victimId == datas.victimId && data.killerId == datas.killerId) {
+                return;
+            }
+            else {
+                playerDbs.delete(roomId);
+            }
+        }
+        else {
+            playerDbs.set(roomId, {
+                round: rooms[roomId].round,
+                victimId: data.victimId,
+                killerId: data.killerId
+            });
+        }
+        console.log("Nhảy điểm không", data.killerId);
+        // Cập nhật trạng thái của người chơi bị bắn
+        rooms[roomId].players[victimIndex].alive = false;
+        if (killerIndex !== -1) {
+            if (data.victimId === data.killerId) {
+                // Tự sát: trừ điểm
+                if (rooms[roomId].players[killerIndex].score == 0) {
+                    rooms[roomId].players[killerIndex].score = 0;
+                }
+                else {
+                    rooms[roomId].players[killerIndex].score -= 50;
+                }
+            }
+            else {
+                // Giết người khác: cộng điểm
+                rooms[roomId].players[killerIndex].score += 100;
+            }
+            // Gửi cập nhật điểm số cho tất cả client
+            io.to(roomId).emit('scoreUpdated', {
+                id: data.killerId,
+                score: rooms[roomId].players[killerIndex].score
+            });
+            // Kiểm tra điều kiện thắng
+            if (rooms[roomId].players[killerIndex].score >= globalSettings.pointsToWin) {
+                io.to(roomId).emit('gameOver', {
+                    winner: rooms[roomId].players[killerIndex]
+                });
+            }
+        }
+        io.to(roomId).emit('playerDied', {
+            victimId: data.victimId,
+            killerId: data.killerId
+        });
+    });
+    socket.on('resetMap', () => {
+        const roomId = getRoom(socket.id, false);
+        if (!roomId)
+            return;
+        // Kiểm tra nếu người dùng không phải host, bỏ qua
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
         if (playerIndex === -1)
             return;
-        rooms[roomId].players[playerIndex].alive = false;
-        if (killerId && killerId !== socket.id) {
-            const killerIndex = rooms[roomId].getPlayerIndex(killerId);
-            if (killerIndex !== -1) {
-                rooms[roomId].players[killerIndex].score += 100;
-                io.to(roomId).emit('scoreUpdated', {
-                    id: killerId,
-                    score: rooms[roomId].players[killerIndex].score
-                });
-                if (rooms[roomId].players[killerIndex].score >= globalSettings.pointsToWin) {
-                    rooms[roomId].players.forEach(player => {
-                        // savePlayerScore(player.name, player.score);
-                    });
-                    io.to(roomId).emit('gameOver', {
-                        winner: rooms[roomId].players[killerIndex],
-                        players: rooms[roomId].players
-                    });
-                    rooms[roomId].prepareNewGame();
-                    return;
-                }
-            }
+        console.log(`[Server] Player ${socket.id} requested map reset for room ${roomId}`);
+        // Chỉ cho phép reset map nếu game chưa đang reset
+        if (!rooms[roomId].isResetting()) {
+            console.log(`[Server] Preparing new game for room ${roomId}`);
+            rooms[roomId].prepareNewGame();
         }
-        socket.emit('spectateMode', {
-            message: 'Bạn đã chết. Đang vào chế độ theo dõi.',
-            players: rooms[roomId].players.filter(p => p.alive)
-        });
-        rooms[roomId].checkNewRound("null");
-        socket.to(roomId).emit('removePlayer', socket.id);
+        else {
+            console.log(`[Server] Room ${roomId} is already resetting, ignoring duplicate request`);
+        }
     });
     socket.on('getPowerup', (powerup) => {
         /**
          * Goal:
          * Working soon, idk lol, so hard to understand 😭😭😭😭😭
          */
-        const roomId = getRoom(socket.id);
+        const roomId = getRoom(socket.id, false);
         if (!roomId)
             return;
         const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
@@ -485,11 +536,3 @@ io.on('connection', (socket) => {
         });
     });
 });
-/**
- * - ✅ [MAP] Tạo bản đồ ngẫu nhiên, maze
- * - ✅ [MODEL] Tạo model cho Player, Room, Bullet, Powerup
- * - ❌ [SOCKET 1] Emit các sự kiện socket như: newGame, joinGame, startGame, sendLocations, sendBullet, bulletDestroyed, playerDied, getPowerup
- * - ✅ [SOCKET 2] Đây là bộ hệ thống nối mạng của game, bao gồm các sự kiện socket, các sự kiện trên sẽ cần được emit logic bằng 1 file server khác
- * - ❌ [SOCKET 3] Ngoài ra emit trong các sự kiện trên cũng sẽ cần được xử lý ở phía PhaserJS như hiển thị thông báo, cập nhật lại dữ liệu, bộ đếm
- * - ❌ [Frontend] Xử lý dữ liệu từ server, hiển thị thông báo và cập nhật UI
- */ 
