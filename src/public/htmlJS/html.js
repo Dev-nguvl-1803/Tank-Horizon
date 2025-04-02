@@ -33,22 +33,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const creditBtn = document.getElementById('btnCredit');
     const creditWindow = document.getElementById('Credit-window');
     const closeCredit = document.getElementById('close-credit');
+
     const logos = document.querySelectorAll('.logo'); 
     const leaderboard = document.querySelectorAll('.leaderboardbox');
 
     creditBtn.addEventListener('click', () => {
         creditWindow.classList.remove('hidden');
         leaderboard.forEach(logo => {
+
+    const leaderboard = document.querySelectorAll('.container');
+    const createroomBtn = document.getElementById('btnCreateroom');
+    const creatroom = document.getElementById('Create-room');
+    const closecreateroom = document.getElementById('close-createroom');
+    const gameplaydisappear = document.querySelectorAll('.gameplay');
+    const joinroomBtn = document.getElementById('btnJoinroom');
+    const joinroom = document.getElementById('Join-room');
+    const closejoinroom = document.getElementById('close-joinroom');
+
+    joinroomBtn.addEventListener('click', () => {
+        joinroom.classList.remove('hidden');
+        gameplaydisappear.forEach(logo => {
+
             logo.style.visibility = 'hidden'; // Hide logos
         });
     });
+
 
     closeCredit.addEventListener('click', () => {
         creditWindow.classList.add('hidden');
         leaderboard.forEach(logo => {
+
+    closejoinroom.addEventListener('click', () => {
+        joinroom.classList.add('hidden');
+        gameplaydisappear.forEach(logo => {
+
             logo.style.visibility = 'visible'; // Show logos again
         });
     });
+
 
     creditBtn.addEventListener('click', () => {
         creditWindow.classList.remove('hidden');
@@ -56,18 +78,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeCredit.addEventListener('click', () => {
         creditWindow.classList.add('hidden');
+
+    createroomBtn.addEventListener('click', () => {
+        creatroom.classList.remove('hidden');
+        gameplaydisappear.forEach(logo => {
+            logo.style.visibility = 'hidden'; // Hide logos
+        });
+    });
+
+    closecreateroom.addEventListener('click', () => {
+        creatroom.classList.add('hidden');
+        gameplaydisappear.forEach(logo => {
+            logo.style.visibility = 'visible'; // Show logos again
+        });
+
     });
 
     creditBtn.addEventListener('click', () => {
         creditWindow.classList.remove('hidden');
+
         logos.forEach(logo => {
+
+        leaderboard.forEach(logo => {
+
             logo.style.visibility = 'hidden'; // Hide logos
         });
     });
 
     closeCredit.addEventListener('click', () => {
         creditWindow.classList.add('hidden');
+
         logos.forEach(logo => {
+
+        leaderboard.forEach(logo => {
+
             logo.style.visibility = 'visible'; // Show logos again
         });
     });

@@ -183,9 +183,15 @@ html, body {
     flex-direction: column;
     justify-content: center;
     position: absolute;
+
     width: 2000px;
     bottom: 15px;
     left: 150px
+
+    width: 90%;
+    bottom: 15%;
+    left: 22.5%;
+
 }
 
 .outer-container {
@@ -226,10 +232,17 @@ html, body {
 
 .tank-horizon {
     position: absolute;
+
     top: -110px;
     left: 620px;
     transform: translateX(-50%);
     width: 500px;
+
+    top: -200px;
+    left: 30%;
+    transform: translateX(-50%);
+    width: 900px;
+
     height: auto;
     
 }
@@ -450,4 +463,92 @@ input[type=text], select {
   position: relative;
   top: -30px;
   left: 120px;
+
+}
+
+.container-room {
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 10%;
+}
+
+.close-create {
+  padding: 1.5%;
+  top: 23px;
+  left: 25px;
+  height: 46px;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: bold;
+  color: #8E8984;
+}
+
+.owner {
+  font-size: 24px;
+  color: #8E8984;
+  text-decoration: underline;
+  margin-bottom: 20px;
+}
+
+.player-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.player-box {
+  width: 180px;
+  height: 240px;
+  background-color: #DBD6CF;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid black;
+}
+
+.player-number {
+  font-size: 24px;
+  color: #8E8984;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.start-text {
+  font-size: 20px;
+  color: #8E8984;
+  font-weight: bold;
+  margin-top: 20px;
+  text-decoration: underline;
+}
+
+.room-code {
+  margin-top: 20px;
+  font-size: 20px;
+  color: #8E8984;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+}
+
+@media (max-width: 800px) {
+  .player-container {
+      flex-direction: column;
+      align-items: center;
+  }
+
+  .player-box {
+      width: 140px;
+      height: 180px;
+  }
+
 }
