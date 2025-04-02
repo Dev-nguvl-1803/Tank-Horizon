@@ -12,7 +12,9 @@
 </head>
 
 <body>
+
     <!-- Test thu thong bao va moi loai -->
+
     <div class="container" id="menu">
         <img src="tank.png" alt="Tank Horizon Logo" class="logo">
         <button class="button" id="play-btn">Chơi</button>
@@ -22,7 +24,11 @@
             <h3>Cài đặt</h3>
             <label>
                 Cài đặt nút bấm:
+
+                <h4>Âm Lượng: <input type="range" min="0" max="100" value="16" id="sound-volume"></h4>
+
                 <h4>Âm Lượng: <input type="range" min="0" max="100" value="50" id="sound-volume"></h4>
+
             </label>
         </div>
         <button class="button" id="btnCredit">Nhà sáng tạo</button>
@@ -30,6 +36,14 @@
         <div class="leaderboardbox">
             <h2>Bảng xếp hạng</h2>
             <table>
+
+              <tr><th>Tên</th><th>Điểm</th></tr>
+              <tr><td>1. alterGolden</td><td>N/A</td></tr>
+              <tr><td>2. Foob</td><td>N/A</td></tr>
+              <tr><td>3. XD</td><td>N/A</td></tr>
+              <tr><td>4. Mika Glazer</td><td>N/A</td></tr>
+              <tr><td>5. Sigmarium</td><td>N/A</td></tr>
+
                 <tr>
                     <th>Tên</th>
                     <th>Điểm</th>
@@ -54,11 +68,65 @@
                     <td>5. Sigmarium</td>
                     <td>N/A</td>
                 </tr>
+
             </table>
         </div>
     </div>
 
     <div id="Credit-window" class="Credit-window hidden">
+
+    <img src="finally.png" id="close-credit" class="close-btn" alt="Close">
+    <div class="center-container">
+        <img src="tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
+        <div class="outer-container">
+            <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
+            <div class="inner-container">
+                <div class="team">Team "Ngọt"</div>
+                <div class="member-list">
+                    <div>
+                        <p><b>Hoàng Quý Long<br>
+                        Cao Phan Minh Hạnh Túc<br>
+                        Trần Hải Nam<br>
+                        Trần Minh Quân<br>
+                        Nguyễn Tuấn Tài<br>
+                        Nguyễn Tiến Thành<br>
+                        Phạm Hà Anh</b></p>
+                    </div>
+                    <div>
+                        <p><b>Product Owner<br>
+                        Scrum<br>
+                        Dev leader<br>
+                        Developer<br>
+                        Developer<br>
+                        Developer<br>
+                        Designer</b></p>
+                    </div>
+                </div>
+                <div class="music"><b>Nhạc nền trong game</b></div>
+                <div class="music-list">
+                    <div>
+                        <p><b>"Day"<br>
+                        "Astro Party background music"</b></p>
+                    </div>
+                    <div>
+                        <p><b>Terraria<br>
+                        Astro Party</b></p>
+                    </div>
+                </div>
+            </div>
+            <div class="social-icons">
+                <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="discord.png" alt="Discord"></a>
+                <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img src="reddit.png" alt="Reddit"></a>
+                <a href="https://tank-horizon.fandom.com/vi/wiki/Trang_Ch%C3%ADnh" target="_blank"><img src="fandom.png" alt="Fandom"></a>
+                <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img src="github.png" alt="GitHub"></a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="lofi.mp3" type="audio/mpeg">
+
         <img src="finally.png" id="close-credit" class="close-btn" alt="Close">
         <div class="center-container">
             <img src="tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
@@ -168,6 +236,7 @@
 
     <audio id="background-music" loop>
         <source src="TD.mp3" type="audio/mpeg">
+
         Your browser does not support the audio tag.
     </audio>
 
@@ -203,7 +272,9 @@
                 </div>
                 <pre id="eventLog"></pre>
             </div>
+            <button id="back-to-menu">Trở về Menu</button>
         </div>
+        
         <div id="game" style="display: none;">
             <div id="room-info">
                 <div>
@@ -226,14 +297,32 @@
         </div>
     </div>
 
+
+    <div id="play" style="display: none;">
+            <img src="finally.png" id="close-play" class="close-btn" alt="Close">
+
     <div id="play" class="gameplay" style="display: none;">
         <img src="finally.png" id="close-play" class="close-btn" alt="Close">
+
         <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
         <div id="Description">Chọn các chế độ chơi của bạn</div>
         <div id="windowTaoPhong" class="TaoPhong">
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
             <input type="text" id="newName" placeholder="Nhập tên của bạn:" maxlength="15" required>
+
+            <button id="newGame">Tạo phòng</button>
+        </div>
+        <div id="windowThamGiaPhong" class="TaoPhong">
+            <h2>Tham gia phòng chơi</h2>
+            <div id="ThamGia">Tên người chơi:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mã phòng:</div>
+            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
+            <div id="btnContain">
+            <button id="joinGame">Tự động tham gia</button>
+            <button id="joinGame">Tham gia ngay</button>
+        </div>
+
             <button id="btnCreateroom">Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
@@ -247,6 +336,7 @@
                 <button id="joinGame">Tự động tham gia</button>
                 <button id="btnJoinroom">Tham gia ngay</button>
             </div>
+
         </div>
         <div id="windowKhanGia" class="TaoPhong">
             <h2>Chế độ khán giả</h2>
@@ -256,7 +346,10 @@
         </div>
     </div>
 
+    <script src ="../htmlJS/html.js"></script>
+
     <script src="../htmlJS/html.js"></script>
+
     <!-- Script load theo thứ tự: Socket.IO, Phaser, Socket A, Socket C -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
