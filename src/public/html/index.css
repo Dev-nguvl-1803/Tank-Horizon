@@ -40,12 +40,12 @@ html, body {
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 16px;
+    font-size: 20px;
     border-radius: 8px; /*cai nay lam smooth cai button*/
     border: 2px solid 000000; /*vien mau cua button*/
     margin: 10px; /*space cua button*/
-    width: 200px;
-    height: 50px;
+    width: 400px;
+    height: 80px;
     transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
   }
   
@@ -60,7 +60,7 @@ html, body {
   }
   
   .logo {
-    max-width: 750px;
+    max-width: 900px;
     width: 100%;
     margin-top: 20px;  /* Vi tri logo de top-center */
   }
@@ -160,7 +160,7 @@ html, body {
   /*Cai nay la cho anh di chuyen ngau nhien tren map css*/
   .random-item {
     position: absolute;
-    width: 175px;
+    width: 130px;
     height: 100px;
     z-index: -1;
     opacity: 0.7;
@@ -457,8 +457,8 @@ input[type=text], select {
   text-align: center;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 10%;
+  height: 50vh;
+  margin: 1px;
 }
 
 .close-create {
@@ -486,12 +486,12 @@ input[type=text], select {
   display: flex;
   justify-content: center;
   gap: 40px;
-  margin-top: 40px;
+  margin-top: 50px;
 }
 
 .player-box {
-  width: 180px;
-  height: 240px;
+  width: 300px;
+  height: 400px;
   background-color: #DBD6CF;
   border-radius: 10px;
   display: flex;
@@ -508,16 +508,16 @@ input[type=text], select {
 }
 
 .start-text {
-  font-size: 20px;
+  font-size: 30px;
   color: #8E8984;
   font-weight: bold;
-  margin-top: 20px;
+  margin-top: 70px;
   text-decoration: underline;
 }
 
 .room-code {
   margin-top: 20px;
-  font-size: 20px;
+  font-size: 30px;
   color: #8E8984;
   position: fixed;
   bottom: 0;
@@ -536,4 +536,63 @@ input[type=text], select {
       width: 140px;
       height: 180px;
   }
+}
+
+.input-error {
+  border: 2px solid red;
+  outline: none;
+}
+
+@keyframes animate-right {
+  0% {
+      transform: translateX(100%);
+      opacity: 0;
+  }
+  100% {
+      transform: translateX(0);
+      opacity: 1;
+  }
+}
+
+@keyframes animate-right-out {
+  0% {
+      transform: translateX(0);
+      opacity: 1;
+  }
+  100% {
+      transform: translateX(100%);
+      opacity: 0;
+  }
+}
+
+.error-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #FD5151;
+  color: #FFFFFF;
+  border: 1px solid #000000;
+  padding: 10px 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.5s;
+  z-index: 1000;
+  animation: animate-right 0.7s forwards;
+}
+
+.error-popup.hide {
+  animation: animate-right-out 0.5s forwards;
+}
+
+.error-box {
+  display: flex;
+  align-items: center;
+}
+
+.error-icon {
+  width: 50px;
+  height: 50px;
 }

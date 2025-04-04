@@ -14,19 +14,18 @@
 <body>
     <!-- Test thu thong bao va moi loai -->
     <div class="container" id="menu">
-        <img src="tank.png" alt="Tank Horizon Logo" class="logo">
+        <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
         <button class="button" id="play-btn">Chơi</button>
         <button class="button" id="settings-btn">Cài đặt</button>
         <div id="settings-window" class="settings-window hidden">
-            <img src="finally.png" id="close-settings" class="close-btn" alt="Close">
+            <img src="../Source/finally.png" id="close-settings" class="close-btn" alt="Close">
             <h3>Cài đặt</h3>
             <label>
                 Cài đặt nút bấm:
-                <h4>Âm Lượng: <input type="range" min="0" max="100" value="50" id="sound-volume"></h4>
+                <h4>Âm Lượng: <input type="range" min="0" max="100" value="0" id="sound-volume"></h4>
             </label>
         </div>
         <button class="button" id="btnCredit">Nhà sáng tạo</button>
-        <button class="button" id="Test-Event">Test Event Socket</button>
         <div class="leaderboardbox">
             <h2>Bảng xếp hạng</h2>
             <table>
@@ -59,9 +58,9 @@
     </div>
 
     <div id="Credit-window" class="Credit-window hidden">
-        <img src="finally.png" id="close-credit" class="close-btn" alt="Close">
+        <img src="../Source/finally.png" id="close-credit" class="close-btn" alt="Close">
         <div class="center-container">
-            <img src="tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
+            <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
             <div class="outer-container">
                 <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
                 <div class="inner-container">
@@ -99,12 +98,12 @@
                     </div>
                 </div>
                 <div class="social-icons">
-                    <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="discord.png" alt="Discord"></a>
-                    <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img src="reddit.png"
+                    <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="../Source/discord.png" alt="Discord"></a>
+                    <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img src="../Source/reddit.png"
                             alt="Reddit"></a>
                     <a href="https://tank-horizon.fandom.com/vi/wiki/Trang_Ch%C3%ADnh" target="_blank"><img
-                            src="fandom.png" alt="Fandom"></a>
-                    <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img src="github.png"
+                            src="../Source/fandom.png" alt="Fandom"></a>
+                    <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img src="../Source/github.png"
                             alt="GitHub"></a>
                 </div>
             </div>
@@ -112,26 +111,26 @@
     </div>
 
     <div id="Create-room" class="Create-room hidden">
-        <img src="finally.png" id="close-createroom" class="close-create" alt="Close">
+        <img src="../Source/finally.png" id="close-createroom" class="close-create" alt="Close">
         <div class="container-room">
             <div class="title">Phòng chờ bắt đầu</div>
             <div class="owner">Bạn là chủ phòng</div>
             <div class="player-container">
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">1</div>
+                    <div class="player-number" id="player-1"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">2</div>
+                    <div class="player-number" id="player-2"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">3</div>
+                    <div class="player-number" id="player-3"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">4</div>
+                    <div class="player-number" id="player-4"></div>
                 </div>
             </div>
             <div class="start-text">Vui lòng chờ người chơi tham gia ...</div>
@@ -140,26 +139,26 @@
     </div>
 
     <div id="Join-room" class="Join-room hidden">
-        <img src="finally.png" id="close-joinroom" class="close-create" alt="Close">
+        <img src="../Source/finally.png" id="close-joinroom" class="close-create" alt="Close">
         <div class="container-room">
             <div class="title">Phòng chờ bắt đầu</div>
             <div class="owner">Bạn là người chơi</div>
             <div class="player-container">
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">1</div>
+                    <div class="player-number" id="player-1"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">2</div>
+                    <div class="player-number" id="player-2"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">3</div>
+                    <div class="player-number" id="player-3"></div>
                 </div>
                 <div>
                     <div class="player-box"></div>
-                    <div class="player-number">4</div>
+                    <div class="player-number" id="player-4"></div>
                 </div>
             </div>
             <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
@@ -167,74 +166,19 @@
     </div>
 
     <audio id="background-music" loop>
-        <source src="TD.mp3" type="audio/mpeg">
+        <source src="../Source/TD.mp3" type="audio/mpeg">
         Your browser does not support the audio tag.
     </audio>
 
-    <div id="game-container" style="display: none;">
-        <div id="menu">
-            <h1>Tank-Horizon Socket Test</h1>
-            <div id="socket-info">
-                <p>Socket A Status: <span id="socket-a-status">Đang kết nối...</span></p>
-                <p>Socket B Status: <span id="socket-b-status">Đang kết nối...</span></p>
-            </div>
-            <div id="create-game">
-                <h2>Tạo phòng mới (Socket A)</h2>
-                <input type="text" id="newName" placeholder="Nhập tên của bạn" maxlength="15" required>
-                <button>Tạo phòng</button>
-            </div>
-            <div id="join-game">
-                <h2>Tham gia phòng (Socket A)</h2>
-                <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
-                <input type="text" id="joinId" placeholder="Nhập ID phòng" maxlength="10" required>
-                <button id="joinGame">Tham gia</button>
-            </div>
-            <div id="room-actions">
-                <h2>Hành động phòng (Socket A)</h2>
-                <button id="getRoom">Xem thông tin phòng</button>
-                <button id="spectateGame">Xem trận đấu</button>
-            </div>
-            <div id="log-container">
-                <h3>Socket Event Log</h3>
-                <div id="socket-direction">
-                    <button id="show-a-to-b">Socket A → B</button>
-                    <button id="show-b-to-c">Socket B → C</button>
-                    <button id="show-all">Tất cả sự kiện</button>
-                </div>
-                <pre id="eventLog"></pre>
-            </div>
-        </div>
-        <div id="game" style="display: none;">
-            <div id="room-info">
-                <div>
-                    <p>Room ID: <span id="roomId"></span></p>
-                    <p>Players: <span id="playerCount">0</span></p>
-                </div>
-                <div id="host-controls" style="display: none;">
-                    <button id="start-game">Bắt đầu trận đấu</button>
-                </div>
-                <div>
-                    <p>Đạn còn lại: <span id="bullet-count">5</span></p>
-                    <p>Điểm số: <span id="score">0</span></p>
-                </div>
-            </div>
-            <div id="game-controls">
-                <p>Điều khiển: Phím mũi tên để di chuyển, Space để bắn</p>
-            </div>
-            <div id="phaser-game"></div>
-            <button id="back-to-menu">Trở về Menu</button>
-        </div>
-    </div>
-
     <div id="play" class="gameplay" style="display: none;">
-        <img src="finally.png" id="close-play" class="close-btn" alt="Close">
+        <img src="../Source/finally.png" id="close-play" class="close-btn" alt="Close">
         <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
         <div id="Description">Chọn các chế độ chơi của bạn</div>
         <div id="windowTaoPhong" class="TaoPhong">
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
-            <input type="text" id="newName" placeholder="Nhập tên của bạn:" maxlength="15" required>
-            <button id="btnCreateroom">Tạo phòng</button>
+            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required>
+            <button>Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
             <h2>Tham gia phòng chơi</h2>
@@ -251,12 +195,12 @@
         <div id="windowKhanGia" class="TaoPhong">
             <h2>Chế độ khán giả</h2>
             <div id="KhanGia">Mã phòng:</div>
-            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
-            <button id="spectateGame">Xem ngay</button>
+            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required>
+            <button>Xem ngay</button>
         </div>
     </div>
 
-    <script src="../htmlJS/html.js"></script>
+    <script src="../js/html.js"></script>
     <!-- Script load theo thứ tự: Socket.IO, Phaser, Socket A, Socket C -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
