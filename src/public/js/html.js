@@ -62,7 +62,7 @@ function addRandomItems() {
     }
 
     var images = [
-        '../Source/logo.jpg'
+        '../Source/xevang.0001.png'
     ];
 
     var item = document.createElement('img');
@@ -132,7 +132,7 @@ window.onload = function () {
         console.error("Error loading image. Using fallback.");
         setTimeout(addFallbackItems, 1000);
     };
-    testImage.src = '../Source/logo.jpg';
+    testImage.src = '../Source/xevang.0001.png';
 };
 
 // Hàm fallback nếu không tải được hình ảnh
