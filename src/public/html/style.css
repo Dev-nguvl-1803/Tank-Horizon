@@ -50,7 +50,9 @@ html, body {
   }
   
   .button:hover { /*hover cua button*/
-    color: rgb(199, 198, 198);
+    color: #F0EAE4;
+    background-color: #8E8984;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
   
   .button:active {
@@ -169,11 +171,14 @@ html, body {
   }
   
   @keyframes moveItem {
-    from {
-        transform: translate(0, 0) rotate(0deg);
+    0% {
+      transform: translate(0, 0) rotate(0deg);
     }
-    to {
-        transform: translate(50px, 0) rotate(360deg);
+    50% {
+      transform: translate(100px, 50px) rotate(180deg);
+    }
+    100% {
+      transform: translate(0, 0) rotate(360deg);
     }
   }
 
@@ -596,17 +601,24 @@ input[type=text], select {
   border: 2px solid black;
 }
 
-/* KICK PLAYER */
-
-@media (max-width: 800px) {
-  .player-container {
-      flex-direction: column;
-      align-items: center;
+@media (max-width: 500px) {
+  .button {
+    width: 90%;
+    font-size: 16px;
+  }
+  
+  .logo {
+    max-width: 100%;
   }
 
-  .player-box {
-      width: 140px;
-      height: 180px;
+  .tank-horizon {
+    width: 100%;
+    top: -100px;
+  }
+
+  .outer-container, .inner-container {
+    width: 100%;
+    padding: 10px;
   }
 }
 
