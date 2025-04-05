@@ -62,7 +62,10 @@ function addRandomItems() {
     }
 
     var images = [
-        '../Source/xevang.0001.png'
+        '../Source/blue_tank.png',
+        '../Source/red_tank.png',
+        '../Source/green_tank.png',
+        '../Source/yellow_tank.png'
     ];
 
     var item = document.createElement('img');
@@ -118,7 +121,7 @@ function addRandomItems() {
     }, duration * 1000);
 
     activeItems++;
-    setTimeout(addRandomItems, 5000 + Math.random() * 8000);
+    setTimeout(addRandomItems, 5000 + Math.random() * 1000);
 }
 
 // Kiểm tra ảnh và khởi động chương trình
@@ -132,7 +135,7 @@ window.onload = function () {
         console.error("Error loading image. Using fallback.");
         setTimeout(addFallbackItems, 1000);
     };
-    testImage.src = '../Source/xevang.0001.png';
+    testImage.src = '../Source/tank.png';
 };
 
 // Hàm fallback nếu không tải được hình ảnh
@@ -327,6 +330,8 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("play").style.display = "none";
             joinRoomDiv.classList.remove("hidden");
 
+            const playerBox1 = document.getElementById("player-11");
+            playerBox1.innerText = nameValue;
         }
     });
 
@@ -380,6 +385,9 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Valid inputs detected, proceeding to room creation."); 
             document.getElementById("play").style.display = "none";
             joinRoomDiv.classList.remove("hidden");
+
+            const playerBox1 = document.getElementById("player-11");
+            playerBox1.innerText = nameValue;
         }
     });
 
