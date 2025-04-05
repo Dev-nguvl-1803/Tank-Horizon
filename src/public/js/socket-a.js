@@ -96,6 +96,9 @@ function spectateGame() {
 
 function startGame() {
     socket.emit('startGame');
+    socket.on('gameAlreadyStarted', (data) => {
+        alert(data);
+    })
 }
 
 function backToMenu() {
@@ -230,8 +233,6 @@ function setupSocketCListeners() {
     });
 
     socket.on('renderMovement', (player) => {
-
-
         if (window.updatePlayerPosition) {
             window.updatePlayerPosition(player);
         }
@@ -263,7 +264,6 @@ function setupSocketCListeners() {
         gameInProgress = false;
 
         alert(`Trò chơi kết thúc! ${data.winner.name} đã chiến thắng với điểm số ${data.winner.score}`);
-
 
         if (window.endGame) {
             window.endGame(data);

@@ -1,3 +1,20 @@
+/**
+ * Bullet class representing a bullet in the game:
+ * - _x: x-coordinate of the bullet
+ * - _y: y-coordinate of the bullet
+ * - _velocityX: x-component of the bullet's velocity
+ * - _velocityY: y-component of the bullet's velocity
+ * - _angle: angle of the bullet in degrees
+ * - _roomId: ID of the room the bullet belongs to
+ * - _ownerId: ID of the player who fired the bullet
+ * - _powerup: type of powerup associated with the bullet (if any)
+ * - _id: unique identifier for the bullet
+ * * - _createdAt: timestamp when the bullet was created
+ * * - _size: size of the bullet (default is 8)
+ * * - _speed: speed of the bullet (default is 5)
+ * * - _maxBounces: maximum number of bounces allowed (default is 2)
+ */
+
 export class Bullet {
     private _x: number;
     private _y: number;
@@ -11,8 +28,7 @@ export class Bullet {
     private _createdAt: number;
     private _size: number = 8;
     private _speed: number = 5; 
-    private _bounceCount: number = 0;
-    private _maxBounces: number = 2; 
+    private _maxBounces: number = 2;
     private _lifetime: number = 5000; 
   
     constructor(x: number, y: number, angle: number, roomId: string, ownerId: string, powerup: string | null = null) {
@@ -104,10 +120,6 @@ export class Bullet {
       return this._speed;
     }
     
-    get bounceCount(): number {
-      return this._bounceCount;
-    }
-    
     get maxBounces(): number {
       return this._maxBounces;
     }
@@ -128,26 +140,6 @@ export class Bullet {
       return (Date.now() - this._createdAt) >= this._lifetime;
     }
     
-    canBounce(): boolean {
-      return this._bounceCount < this._maxBounces;
-    }
-    
-    bounce(wallType: 'horizontal' | 'vertical'): void {
-      if (this.canBounce()) {
-        if (wallType === 'horizontal') {
-          
-          this._velocityY = -this._velocityY;
-        } else {
-          
-          this._velocityX = -this._velocityX;
-        }
-        
-        
-        this._angle = Math.atan2(this._velocityY, this._velocityX) * 180 / Math.PI;
-        this._bounceCount++;
-      }
-    }
-    
     update(): void {
       this._x += this._velocityX;
       this._y += this._velocityY;
@@ -166,7 +158,6 @@ export class Bullet {
         ownerId: this._ownerId,
         powerup: this._powerup,
         size: this._size,
-        bounceCount: this._bounceCount,
         timeRemaining: this.timeRemaining
       };
     }

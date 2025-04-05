@@ -4,6 +4,30 @@ import { Powerup } from './Powerup';
 import { generateBoard } from '../server/map';
 import { Bullet } from './Bullet';
 
+/**
+ * Responder:
+ * - _id roomId
+ * - _players players storage
+ * - _round current round number
+ * - _highScorePlayer player with the highest score
+ * - _map current game map
+ * - _gameInProgress indicates if the game is ongoing
+ * - _powerups active powerups in the game
+ * - _powerupInterval interval for spawning powerups 
+ * - _isResetting indicates if the game is resetting
+ * - _socket socket connection for the room
+ * - _io server instance for the room
+ * - _settings game settings configuration
+ * 
+ * -> Room đóng 2 vai trò (Tính lưu trữ + Tính xử lý):
+ *    + Lưu trữ thông tin phòng
+ *    + Lưu trữ thông tin người chơi
+ * 
+ *    + Xử lý bản đồ (generate map, draw walls)
+ *    + Xử lý KHỞI TẠO player (score, color, alive status, score)
+ *    + Xử lý trận đấu (round counter, reset game, prepare new game)
+*/
+
 export class Room {
   private _id: string;
   private _players: Player[] = [];
@@ -13,7 +37,6 @@ export class Room {
   private _gameInProgress: boolean = false;
   private _powerups: Powerup[] = [];
   private _powerupInterval: NodeJS.Timeout | null = null;
-  private _inCheckFunc: number = 0;
   private _isResetting: boolean = false;
   private _socket: Socket;
   private _io: Server;
@@ -30,9 +53,6 @@ export class Room {
     this._settings = settings;
     this._map = this.generateRandomMap(type);
   }
-
-  private _bullets: Bullet[] = [];
-
 
   get id(): string {
     return this._id;
@@ -61,8 +81,6 @@ export class Room {
   set gameInProgress(value: boolean) {
     this._gameInProgress = value;
   }
-
-
 
   newPlayer(id: string, name: string): void {
 
@@ -177,22 +195,23 @@ export class Room {
 
     const newMap = this.generateRandomMap("ok");
     this._map = newMap;
-
-
-
+    
     for (const p of this._players) {
       p.alive = true;
       p.ready = false;
-
     }
 
-
+    // Emit drawBoard event to ensure map synchronization
     this._io.to(this._id).emit('prepareNewGame', {
       roomId: this._id,
       players: this._players.map(p => p.toJSON()),
       map: this._map,
       round: this._round
     });
+
+    for(let i = 0; i < 1; i++) {
+      this._io.to(this._id).emit('drawBoard', this._map);
+    }
 
     setTimeout(() => {
       this._isResetting = false;

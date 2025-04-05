@@ -1,4 +1,20 @@
 "use strict";
+/**
+ * Bullet class representing a bullet in the game:
+ * - _x: x-coordinate of the bullet
+ * - _y: y-coordinate of the bullet
+ * - _velocityX: x-component of the bullet's velocity
+ * - _velocityY: y-component of the bullet's velocity
+ * - _angle: angle of the bullet in degrees
+ * - _roomId: ID of the room the bullet belongs to
+ * - _ownerId: ID of the player who fired the bullet
+ * - _powerup: type of powerup associated with the bullet (if any)
+ * - _id: unique identifier for the bullet
+ * * - _createdAt: timestamp when the bullet was created
+ * * - _size: size of the bullet (default is 8)
+ * * - _speed: speed of the bullet (default is 5)
+ * * - _maxBounces: maximum number of bounces allowed (default is 2)
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bullet = void 0;
 class Bullet {
@@ -14,9 +30,8 @@ class Bullet {
     _createdAt;
     _size = 8;
     _speed = 5;
-    _bounceCount = 0;
-    _maxBounces = 2; // Maximum number of times a bullet can bounce
-    _lifetime = 5000; // Bullet lives for 5 seconds by default
+    _maxBounces = 2;
+    _lifetime = 5000;
     constructor(x, y, angle, roomId, ownerId, powerup = null) {
         this._x = x + 8 * Math.cos(angle * Math.PI / 180);
         this._y = y + 8 * Math.sin(angle * Math.PI / 180);
@@ -28,13 +43,12 @@ class Bullet {
         this._powerup = powerup;
         this._id = this.generateBulletId();
         this._createdAt = Date.now();
-        // Adjust based on powerup
         if (powerup === 'lazer') {
             this._speed = 8;
-            this._maxBounces = 0; // Laser doesn't bounce
+            this._maxBounces = 0;
         }
         else if (powerup === 'gatling') {
-            this._lifetime = 3000; // Gatling bullets are short-lived
+            this._lifetime = 3000;
         }
     }
     generateBulletId() {
@@ -88,9 +102,6 @@ class Bullet {
     get speed() {
         return this._speed;
     }
-    get bounceCount() {
-        return this._bounceCount;
-    }
     get maxBounces() {
         return this._maxBounces;
     }
@@ -103,45 +114,13 @@ class Bullet {
     get timeRemaining() {
         return Math.max(0, this._lifetime - (Date.now() - this._createdAt));
     }
-    /**
-     * Check if the bullet's lifetime has expired
-     */
     isExpired() {
         return (Date.now() - this._createdAt) >= this._lifetime;
     }
-    /**
-     * Check if the bullet can still bounce
-     */
-    canBounce() {
-        return this._bounceCount < this._maxBounces;
-    }
-    /**
-     * Bounce the bullet off a wall
-     * @param wallType 'horizontal' for top/bottom walls or 'vertical' for left/right walls
-     */
-    bounce(wallType) {
-        if (this.canBounce()) {
-            if (wallType === 'horizontal') {
-                // Bounce off horizontal wall (top/bottom) - reverse Y velocity
-                this._velocityY = -this._velocityY;
-            }
-            else {
-                // Bounce off vertical wall (left/right) - reverse X velocity
-                this._velocityX = -this._velocityX;
-            }
-            // Update angle based on new velocity
-            this._angle = Math.atan2(this._velocityY, this._velocityX) * 180 / Math.PI;
-            this._bounceCount++;
-        }
-    }
-    /**
-     * Update the bullet's position based on its velocity
-     */
     update() {
         this._x += this._velocityX;
         this._y += this._velocityY;
     }
-    // Phương thức để chuyển đối tượng thành JSON an toàn cho gửi qua socket
     toJSON() {
         return {
             id: this._id,
@@ -154,56 +133,8 @@ class Bullet {
             ownerId: this._ownerId,
             powerup: this._powerup,
             size: this._size,
-            bounceCount: this._bounceCount,
             timeRemaining: this.timeRemaining
         };
-    }
-    // Kiểm tra va chạm với tường
-    checkWallCollision(walls) {
-        // Kích thước hitbox đạn
-        const bulletSize = this._size;
-        for (const wall of walls) {
-            // Kiểm tra va chạm giữa đạn và tường
-            if (this.rectIntersect(this._x - bulletSize / 2, this._y - bulletSize / 2, bulletSize, bulletSize, wall.x, wall.y, wall.width, wall.height)) {
-                // Xác định loại tường (ngang hoặc dọc) dựa vào kích thước
-                const wallType = wall.width > wall.height ? 'horizontal' : 'vertical';
-                // Xử lý phản xạ nếu đạn còn có thể nảy
-                if (this.canBounce()) {
-                    this.bounce(wallType);
-                    // Đẩy đạn ra khỏi tường một chút để tránh bị kẹt
-                    if (wallType === 'horizontal') {
-                        this._y += (this._velocityY > 0 ? -1 : 1) * 2;
-                    }
-                    else {
-                        this._x += (this._velocityX > 0 ? -1 : 1) * 2;
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    // Kiểm tra va chạm giữa hai hình chữ nhật
-    rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
-        return !(x1 + w1 <= x2 ||
-            x2 + w2 <= x1 ||
-            y1 + h1 <= y2 ||
-            y2 + h2 <= y1);
-    }
-    // Kiểm tra va chạm với player
-    checkPlayerCollision(players) {
-        const bulletSize = this._size;
-        for (const player of players) {
-            // Bỏ qua va chạm với chính người bắn đạn
-            if (player.id === this._ownerId || !player.alive)
-                continue;
-            // Kiểm tra va chạm với hitbox của player
-            const playerHitboxSize = 24; // Kích thước hitbox của tank
-            if (this.rectIntersect(this._x - bulletSize / 2, this._y - bulletSize / 2, bulletSize, bulletSize, player.x - playerHitboxSize / 2, player.y - playerHitboxSize / 2, playerHitboxSize, playerHitboxSize)) {
-                return player.id; // Trả về ID của người chơi bị trúng đạn
-            }
-        }
-        return null;
     }
 }
 exports.Bullet = Bullet;

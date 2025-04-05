@@ -2,6 +2,13 @@
  * Socket C: Kết nối với Socket B thông qua Socket A để xử lý và hiển thị game 
  */
 
+
+/**
+ * Fix case:
+ * - Lỗi đồng bộ map
+ *  + Một trong số các client không nhận được map hoặc bị nhận map chậm ngay cả khi tôi kiểm thử localhost giữa bất cứ số lượng client nào
+ */
+
 let gameData = {
     board: null,
     players: [],
@@ -60,6 +67,7 @@ class Scene extends Phaser.Scene {
                 this.waitingText = null;
             }
 
+            this.clearGameObjects();
             this.createGameObjects();
 
             const mapSize = 680;
@@ -67,7 +75,7 @@ class Scene extends Phaser.Scene {
         };
 
         this.resetGame = function (data) {
-            console.log('Resetting game with data:', data);
+            console.log('[SYNC] Resetting game with data:', data);
 
             alive = true;
             canShoot = true;
@@ -86,11 +94,11 @@ class Scene extends Phaser.Scene {
                 this.texts = [];
             }
 
-            console.log('Waiting for new map data...');
+            console.log('[SYNC] Waiting for new map data...');
             
             const mapTimeout = setTimeout(() => {
                 if (!mapReceived) {
-                    console.log('Map data timeout, requesting new map data');
+                    console.log('[SYNC] Map data timeout, requesting new map data');
                     socket.emit('resetMap');
                 }
             }, 3000);
@@ -98,7 +106,7 @@ class Scene extends Phaser.Scene {
             socket.off('prepareNewGame');
             
             socket.on('prepareNewGame', (newData) => {
-                console.log('Received new map data:', newData);
+                console.log('[SYNC] Received new map data:', newData);
                 
                 if (!mapReceived) {
                     clearTimeout(mapTimeout);
@@ -113,21 +121,14 @@ class Scene extends Phaser.Scene {
                         this.playersData.forEach(player => {
                             player.alive = true;
                             if (player.id === socket.id) {
-                                console.log('Reset game - Current player status set to alive');
+                                console.log('[SYNC] Reset game - Current player status set to alive');
                                 localPlayer = player;
                             }
                         });
                     }
 
-                    if (this.boardData) {
-                        console.log('Creating new board with data:', this.boardData);
-                        const boardCreated = createBoard(this, this.boardData);
-                        if (!boardCreated) {
-                            console.error('Failed to create board, requesting new map');
-                            socket.emit('resetMap');
-                            return;
-                        }
-                    }
+                    // Không gọi createBoard cục bộ ở đây
+                    // Server sẽ emit sự kiện drawBoard để đồng bộ bản đồ giữa các client
                     this.createGameObjects();
                 }
             });
@@ -294,18 +295,29 @@ class Scene extends Phaser.Scene {
 
 
         this.endGame = function (data) {
-            this.gameInProgress = false;
-
-
+            this.clearGameObjects();
+            
             const winnerText = this.add.text(400, 300,
-                `Người chiến thắng: ${data.winner.name}\nĐiểm số: ${data.winner.score}`,
+                `Người chiến thắng: ${data.name}\nĐiểm số: ${data.score}`,
                 { fontSize: '24px', fill: '#fff', align: 'center' }
             );
             winnerText.setOrigin(0.5);
             winnerText.setDepth(10);
-
-
+            
+            
             this.texts.push(winnerText);
+            this.waitingText = this.add.text(400, 300, 'Đang chờ kết nối...', {
+                fontSize: '24px',
+                fill: '#000000'
+            }).setOrigin(0.5);
+            this.waitingText.setDepth(10);
+            this.gameInProgress = false;
+            this.playersData = this.playersData.map(player => {
+                player.score = 0
+                this.gameInProgress = false;
+                return player;
+            });
+            this.gameInProgress = false;
         };
 
 
@@ -325,20 +337,17 @@ class Scene extends Phaser.Scene {
                     this.playerSprites[playerId].destroy();
                     delete this.playerSprites[playerId];
                 }
-
-            
+                
                 if (this.playerTexts && this.playerTexts[playerId]) {
                     this.playerTexts[playerId].destroy();
-                
                     delete this.playerTexts[playerId];
                 }
-
-            
-            
+                
                 const playerData = this.playersData ? this.playersData.find(p => p.id === playerId) : null;
                 if (playerData) {
                     playerData.alive = false;
                 }
+                this.playersData = this.playersData.filter(p => p.id !== playerId);
             } catch (error) {
                 console.error(`Error removing player ${playerId}:`, error.message);
             }
@@ -427,25 +436,23 @@ class Scene extends Phaser.Scene {
         this.reloadText.setDepth(10);
 
         this.createGameObjects = function () {
-            console.log('Creating game objects');
+            console.log('[SYNC] Creating game objects');
             this.texts.forEach(text => text.destroy());
             this.texts = [];
 
-        
-            createBoard(this, this.boardData);
-            printBoard(this.boardData.board);
-
+            // Không gọi createBoard ở đây, việc tạo bản đồ được xử lý thông qua event drawBoard
+            // Chỉ in thông tin bản đồ để debug
+            if (this.boardData && this.boardData.board) {
+                printBoard(this.boardData.board);
+            }
         
             if (this.playersData) {
                 this.playersData.forEach(player => {
-                
                     const spawnPosition = getRandomPositionSafe(this, 100);
                     
-                
                     player.x = spawnPosition.x;
                     player.y = spawnPosition.y;
                     
-                
                     const playerSprite = this.physics.add.sprite(spawnPosition.x, spawnPosition.y, 'tank');
                     playerSprite.setScale(0.7);
                     playerSprite.setDepth(2);
@@ -453,7 +460,6 @@ class Scene extends Phaser.Scene {
                     playerSprite.playerId = player.id;
                     playerSprite.setCollideWorldBounds(true);
 
-                
                     const hitboxWidth = Math.floor(playerSprite.width * 0.8);
                     const hitboxHeight = Math.floor(playerSprite.height * 0.8);
                     playerSprite.body.setSize(hitboxWidth, hitboxHeight, true);
@@ -492,8 +498,6 @@ class Scene extends Phaser.Scene {
                             this.physics.add.collider(playerSprite, this.playerSprites[id]);
                         }
                     }
-
-                    console.log("my player is real", player);
                 
                     const playerText = this.add.text(
                         playerSprite.x,
@@ -506,11 +510,10 @@ class Scene extends Phaser.Scene {
                     this.playerTexts[player.id] = playerText;
                     this.texts.push(playerText);
 
-                
                     if (player.id === socket.id) {
                         localPlayer = player;
                         console.log('Local player sprite created at:', playerSprite.x, playerSprite.y);
-                    
+                        
                         window.socketA.sendPlayerLocation(playerSprite.x, playerSprite.y, playerSprite.rotation);
                     }
                 });
@@ -542,35 +545,27 @@ class Scene extends Phaser.Scene {
     update() {
         if (!this.gameInProgress) return;
 
-    
         const alivePlayers = Object.values(this.playerSprites).filter(sprite => sprite.active).length;
 
-    
-        if (alivePlayers === 1 && this.gameInProgress && resetInProgress === 0) {
+        if(this.playersData.length == 1) {
+            console.log("now end one", this.playersData[0])
+            this.endGame(this.playersData[0]);
+            this.gameInProgress = false;
+            alert("Chỉ còn một người chơi, bạn đã thắng!");
+        } else if (alivePlayers === 1 && this.gameInProgress && resetInProgress === 0 && this.playersData.length > 1) {
             console.log('Only one player alive, initiating reset sequence...');
-            
-        
             resetInProgress = 1;
 
-        
             setTimeout(() => {
                 console.log('Game reset timer completed, resetting game...');
-                
-            
                 socket.emit('resetMap');
-                
                 this.resetGame({ board: this.boardData, players: this.playersData });
-
-            
                 resetInProgress = 2;
-
             
                 setTimeout(() => {
                     resetInProgress = 0;
                 }, 1000);
             }, 5000);
-            
-        
         }
 
     
@@ -585,10 +580,10 @@ class Scene extends Phaser.Scene {
         let oldRotation = playerSprite.rotation;
 
         if (this.cursors.left.isDown) {
-            playerSprite.rotation -= 0.05;
+            playerSprite.rotation -= 0.03;
             moved = true;
         } else if (this.cursors.right.isDown) {
-            playerSprite.rotation += 0.05;
+            playerSprite.rotation += 0.03;
             moved = true;
         }
 
@@ -624,7 +619,7 @@ class Scene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey) && this.currentAmmo > 0 && this.canShoot) {
             this.canShoot = false;
             this.currentAmmo--;
-            window.socketA.fireBullet(playerSprite.x, playerSprite.y, playerSprite.rotation, currentPowerup);
+            window.socketA.fireBullet(playerSprite.x - 6.5, playerSprite.y, playerSprite.rotation, currentPowerup);
             this.time.delayedCall(200, () => { this.canShoot = true; });
         }
 
@@ -661,7 +656,7 @@ function initPhaserGame() {
             default: 'arcade',
             arcade: {
                 gravity: { y: 0 },
-                debug: true
+                debug: false
             }
         },
         backgroundColor: '#FFFFFF',
@@ -697,19 +692,14 @@ function initPhaserGame() {
  */
 
 const createBoard = (self, board) => {
-    console.log('Creating board with data:', board);
+    console.log('[DEBUG] Creating board with data:', board);
 
     if (!board || typeof board !== 'object') {
-        console.error('Invalid board data');
+        console.error('[ERROR] Invalid board data');
         return false;
     }
 
-    let boardArray = Array.isArray(board) ? board : Object.values(board);
-    if (!Array.isArray(boardArray) || boardArray.length === 0) {
-        console.error('boardArray is not an array or is empty:', boardArray);
-        return false;
-    }
-
+    // Xóa bản đồ cũ nếu có
     if (self.walls) {
         self.walls.clear(true, true);
     } else {
@@ -717,13 +707,15 @@ const createBoard = (self, board) => {
     }
 
     const mapSize = 680;
-
-
-    if (boardArray[0] && Array.isArray(boardArray[0])) {
-        for (let wall of boardArray[0]) {
+    
+    // Xử lý cấu trúc đa dạng của dữ liệu bản đồ
+    if (board.walls && Array.isArray(board.walls)) {
+        console.log(`[DEBUG] Creating walls from board.walls array with ${board.walls.length} walls`);
+        // Nếu có thuộc tính walls là mảng (cấu trúc phổ biến)
+        for (let wall of board.walls) {
             if (!wall || typeof wall !== 'object') continue;
 
-            if (wall.x !== undefined && wall.y !== undefined &&
+            if (wall.x !== undefined && wall.y !== undefined && 
                 wall.width !== undefined && wall.height !== undefined) {
                 let tile;
                 if (wall.width > wall.height) {
@@ -745,21 +737,136 @@ const createBoard = (self, board) => {
                 tile.refreshBody();
                 tile.setVisible(true);
                 tile.setDepth(1);
-
-            
-            
-            
-
                 self.walls.add(tile);
-            } else {
-                console.warn('Invalid wall object:', wall);
+            }
+        }
+    } else if (Array.isArray(board) && board.length > 0) {
+        console.log(`[DEBUG] Board is array with length ${board.length}`);
+        // Nếu board là mảng và mảng đầu tiên chứa các bức tường
+        if (Array.isArray(board[0])) {
+            console.log(`[DEBUG] First element is array with length ${board[0].length}`);
+            // Nếu mảng đầu tiên là mảng (cấu trúc cũ)
+            for (let wall of board[0]) {
+                if (!wall || typeof wall !== 'object') continue;
+
+                if (wall.x !== undefined && wall.y !== undefined &&
+                    wall.width !== undefined && wall.height !== undefined) {
+                    let tile;
+                    if (wall.width > wall.height) {
+                        tile = self.physics.add.staticSprite(
+                            wall.x + wall.width / 2,
+                            wall.y + wall.height / 2,
+                            "wall_x"
+                        );
+                    } else {
+                        tile = self.physics.add.staticSprite(
+                            wall.x + wall.width / 2,
+                            wall.y + wall.height / 2,
+                            "wall_y"
+                        );
+                    }
+                    tile.displayWidth = wall.width;
+                    tile.displayHeight = wall.height;
+                    tile.body.setSize(wall.width, wall.height);
+                    tile.refreshBody();
+                    tile.setVisible(true);
+                    tile.setDepth(1);
+                    self.walls.add(tile);
+                }
+            }
+        } else {
+            // Có thể các bức tường là mảng trực tiếp
+            console.error(`[ERROR] Unexpected board structure`);
+            console.log(JSON.stringify(board).substring(0, 200) + '...');
+            return false;
+        }
+    } else if (board.board && Array.isArray(board.board)) {
+        // Xử lý cấu trúc dữ liệu board.board - tạo tường từ dữ liệu lưới
+        console.log(`[DEBUG] Creating walls from board.board with ${board.board.length} cells`);
+        const tileSize = 68;
+        
+        for (let cell of board.board) {
+            if (!cell) continue;
+            
+            const x = (cell.col - 1) * tileSize;
+            const y = (cell.row - 1) * tileSize;
+            
+            if (cell.top) {
+                let tile = self.physics.add.staticSprite(
+                    x + tileSize/2,
+                    y,
+                    "wall_x"
+                );
+                tile.displayWidth = tileSize;
+                tile.displayHeight = 4;
+                tile.body.setSize(tileSize, 4);
+                tile.refreshBody();
+                tile.setVisible(true);
+                tile.setDepth(1);
+                self.walls.add(tile);
+            }
+            
+            if (cell.left) {
+                let tile = self.physics.add.staticSprite(
+                    x,
+                    y + tileSize/2,
+                    "wall_y"
+                );
+                tile.displayWidth = 4;
+                tile.displayHeight = tileSize;
+                tile.body.setSize(4, tileSize);
+                tile.refreshBody();
+                tile.setVisible(true);
+                tile.setDepth(1);
+                self.walls.add(tile);
+            }
+            
+            // Bức tường phía dưới của hàng cuối cùng
+            if (cell.row === 10 && cell.bottom) {
+                let tile = self.physics.add.staticSprite(
+                    x + tileSize/2,
+                    y + tileSize,
+                    "wall_x"
+                );
+                tile.displayWidth = tileSize;
+                tile.displayHeight = 4;
+                tile.body.setSize(tileSize, 4);
+                tile.refreshBody();
+                tile.setVisible(true);
+                tile.setDepth(1);
+                self.walls.add(tile);
+            }
+            
+            // Bức tường bên phải của cột cuối cùng
+            if (cell.col === 10 && cell.right) {
+                let tile = self.physics.add.staticSprite(
+                    x + tileSize,
+                    y + tileSize/2,
+                    "wall_y"
+                );
+                tile.displayWidth = 4;
+                tile.displayHeight = tileSize;
+                tile.body.setSize(4, tileSize);
+                tile.refreshBody();
+                tile.setVisible(true);
+                tile.setDepth(1);
+                self.walls.add(tile);
             }
         }
     } else {
-        console.error('No wall data in boardArray[0]:', boardArray);
+        console.error('[ERROR] Unrecognized board structure:', board);
+        return false;
     }
 
-    console.log(`Created ${self.walls.getChildren().length} wall tiles`);
+    const wallsCount = self.walls.getChildren().length;
+    console.log(`[DEBUG] Created ${wallsCount} wall tiles`);
+    
+    // Nếu không có bức tường nào được tạo, coi như có lỗi
+    if (wallsCount === 0) {
+        console.error('[ERROR] No walls were created!');
+        return false;
+    }
+    
     self.cameras.main.centerOn(mapSize / 2, mapSize / 2);
     return true;
 };
@@ -886,24 +993,41 @@ socket.on('playerDied', (data) => {
 });
 
 socket.on('drawBoard', (board) => {
+    console.log('[SYNC] Received drawBoard event:', new Date().toISOString());
+    
     if (window.game && window.game.scene.scenes[0]) {
+        // Lưu dữ liệu bản đồ vào game scene
         window.game.scene.scenes[0].boardData = board;
-        try {
-            createBoard(window.game.scene.scenes[0], board);
-
         
+        try {
+            // Xóa bản đồ cũ nếu có
+            if (window.game.scene.scenes[0].walls) {
+                window.game.scene.scenes[0].walls.clear(true, true);
+            }
+            
+            // Tạo bản đồ mới từ dữ liệu nhận được
+            createBoard(window.game.scene.scenes[0], board);
+            
+            // Căn giữa camera
             const mapSize = 680;
             window.game.scene.scenes[0].cameras.main.centerOn(mapSize / 2, mapSize / 2);
+            
+            console.log('[SYNC] Map successfully created from drawBoard event');
         } catch (error) {
-            console.error('Error creating board from drawBoard event:', error);
+            console.error('[SYNC] Error creating board from drawBoard event:', error);
         }
     } else {
-        console.error('Game not initialized yet, cannot draw board');
+        console.error('[SYNC] Game not initialized yet, storing map data for later');
+        // Lưu dữ liệu bản đồ để sử dụng sau khi game được khởi tạo
+        if (!pendingGameData) {
+            pendingGameData = {};
+        }
+        pendingGameData.board = board;
     }
 });
 
-socket.on('playerLeft', (playerId) => {
-    window.gameC.removePlayer(playerId);
+socket.on('playerLeft', (player) => {
+    window.gameC.removePlayer(player.id);
 });
 
 socket.on('resetGame', (data) => {
