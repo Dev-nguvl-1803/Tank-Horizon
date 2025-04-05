@@ -397,3 +397,26 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("play").style.display = "block"; 
     });
 });
+
+// KICK PLAYER LÀ 2 CÁI DƯỚI CÙNG NÀY
+
+// Xử lý kick người chơi
+document.querySelectorAll('.kick-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const playerBox = e.target.closest('.player-box');
+        if (playerBox) {
+            playerBox.querySelector('.player-content').innerHTML = 'Trống';
+            showNotification('Đuổi người dùng thành công!');
+        }
+    });
+});
+  
+// Hiển thị notification (giữ nguyên)
+function showNotification(message) {
+    const noti = document.createElement('div');
+    noti.className = 'notification';
+    noti.textContent = message;
+    document.body.appendChild(noti);
+    setTimeout(() => noti.remove(), 3000);
+}

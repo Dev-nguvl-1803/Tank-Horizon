@@ -487,17 +487,6 @@ input[type=text], select {
   margin-top: 50px;
 }
 
-.player-box {
-  width: 300px;
-  height: 400px;
-  background-color: #DBD6CF;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid black;
-}
-
 .player-number {
   font-size: 24px;
   color: #8E8984;
@@ -594,4 +583,92 @@ input[type=text], select {
 .error-icon {
   width: 50px;
   height: 50px;
+}
+
+.player-box {
+  width: 300px;
+  height: 400px;
+  background-color: #DBD6CF;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid black;
+}
+
+/* KICK PLAYER */
+
+@media (max-width: 800px) {
+  .player-container {
+      flex-direction: column;
+      align-items: center;
+  }
+
+  .player-box {
+      width: 140px;
+      height: 180px;
+  }
+}
+
+/* Kick button style */
+.player-box {
+  position: relative;
+}
+
+/* Kick button */
+.kick-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 25px;
+  height: 25px;
+  background: #ff0000;
+  color: white;
+  border: 2px solid #000;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.player-box:hover .kick-btn {
+  display: flex;
+}
+
+.kick-btn:hover {
+  opacity: 0.8;
+}
+
+/* Player content */
+.player-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #DBD6CF;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 100;
+  animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
 }
