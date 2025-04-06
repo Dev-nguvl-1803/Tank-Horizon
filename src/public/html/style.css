@@ -684,3 +684,17 @@ input[type=text], select {
 @keyframes fadeOut {
   to { opacity: 0; }
 }
+
+/* Desktop lớn (trên 1200px) */
+@media (min-width: 1200px) {
+  body {
+    font-size: 18px;
+  }
+}
+
+/* Laptop vừa (từ 992px đến 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  body {
+    font-size: 16px;
+  }
+}
