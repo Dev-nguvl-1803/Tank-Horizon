@@ -25,28 +25,64 @@ html, body {
     }
   }
   
+  @media screen and (min-width: 769px) {
+    /* STYLES HERE */
+    .button{
+      font-family: Arial, Helvetica, sans-serif; /*font chu*/
+      font-weight: bold; /*de dam*/
+      background-color: #C1BCB6; /* gray */
+      color: white; /*set text yea*/
+      padding: 15px 0;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 20px;
+      border-radius: 8px; /*cai nay lam smooth cai button*/
+      border: 2px solid 000000; /*vien mau cua button*/
+      margin: 10px; /*space cua button*/
+      width: 400px;
+      height: 80px;
+      transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
+    }
+    
+    .logo {
+      max-width: 900px;
+      width: 100%;
+      margin-top: 20px;  /* Vi tri logo de top-center */
+    }
+  
+    .tank-horizon {
+      width: 100%;
+      top: -100px;
+    }
+  
+    .outer-container, .inner-container {
+      width: 100%;
+      padding: 10px;
+    }
+
+    .leaderboardbox{
+      font-family: Arial, Helvetica, sans-serif; /*font chu*/
+      font-weight: bold; /*de dam*/
+      background-color: #8E8984; /* gray */
+      color: white; /*set text yea*/
+      font-size: 16px;
+      border-radius: 8px; /*cai nay lam smooth cai button*/
+      border: 2px solid #000000; /*vien mau cua button*/
+      width: 200px;
+      height: 220px;
+      position: absolute;
+      top: 250px;
+      left: 25px;
+      text-align: center;
+    }
+  }
+  
+
   .container {
     display: flex;
     flex-direction: column;
     align-items: center;  /* Vi tri content chinh gom 3 nut se de o giua */
-  }
-  
-  .button{
-    font-family: Arial, Helvetica, sans-serif; /*font chu*/
-    font-weight: bold; /*de dam*/
-    background-color: #C1BCB6; /* gray */
-    color: white; /*set text yea*/
-    padding: 15px 0;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 20px;
-    border-radius: 8px; /*cai nay lam smooth cai button*/
-    border: 2px solid 000000; /*vien mau cua button*/
-    margin: 10px; /*space cua button*/
-    width: 400px;
-    height: 80px;
-    transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
   }
   
   .button:hover { /*hover cua button*/
@@ -60,35 +96,7 @@ html, body {
     box-shadow: 0 5px #666;
     transform: translateY(4px);
   }
-  
-  .logo {
-    max-width: 900px;
-    width: 100%;
-    margin-top: 20px;  /* Vi tri logo de top-center */
-  }
-  
-  .settinglogo{
-    position: absolute;
-    max-width: 75px;
-    right: 45px; /*day xa sang ben phai mot ti nua*/
-    margin-top: 35px; /*day xa cai setting xuong mot ti nua*/
-  }
     
-  .leaderboardbox{
-    font-family: Arial, Helvetica, sans-serif; /*font chu*/
-    font-weight: bold; /*de dam*/
-    background-color: #8E8984; /* gray */
-    color: white; /*set text yea*/
-    font-size: 16px;
-    border-radius: 8px; /*cai nay lam smooth cai button*/
-    border: 2px solid #000000; /*vien mau cua button*/
-    width: 173px;
-    height: 220px;
-    position: absolute;
-    top: 250px;
-    left: 25px;
-  }
-  
   .settings-window {
     font-family: Arial, Helvetica, sans-serif; /*font chu*/
     font-weight: bold; /*de dam*/
@@ -601,27 +609,6 @@ input[type=text], select {
   border: 2px solid black;
 }
 
-@media (max-width: 500px) {
-  .button {
-    width: 90%;
-    font-size: 16px;
-  }
-  
-  .logo {
-    max-width: 100%;
-  }
-
-  .tank-horizon {
-    width: 100%;
-    top: -100px;
-  }
-
-  .outer-container, .inner-container {
-    width: 100%;
-    padding: 10px;
-  }
-}
-
 /* Kick button style */
 .player-box {
   position: relative;
@@ -685,16 +672,11 @@ input[type=text], select {
   to { opacity: 0; }
 }
 
-/* Desktop lớn (trên 1200px) */
-@media (min-width: 1200px) {
-  body {
-    font-size: 18px;
-  }
+
+@media screen and (min-device-width: 481px) and (max-device-width: 768px) { 
+  /* STYLES HERE */
 }
 
-/* Laptop vừa (từ 992px đến 1199px) */
-@media (max-width: 1199px) and (min-width: 992px) {
-  body {
-    font-size: 16px;
-  }
+@media only screen and (max-device-width: 480px) {
+  /* STYLES HERE */
 }
