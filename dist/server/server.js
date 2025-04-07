@@ -289,13 +289,18 @@ io.on('connection', (socket) => {
             socket.emit('notEnoughPlayers', 'Cần ít nhất 2 người chơi để bắt đầu');
             return;
         }
+        // Thiết lập trạng thái trò chơi là đã bắt đầu
         rooms[roomId].gameInProgress = true;
         // Emit drawBoard để đồng bộ bản đồ khi trò chơi bắt đầu
         io.to(roomId).emit('drawBoard', rooms[roomId].map);
+        // Thông báo cho các client rằng trò chơi đã bắt đầu
         io.to(roomId).emit('gameStart', {
             board: rooms[roomId].map,
             players: rooms[roomId].players
         });
+        // Chỉ bắt đầu spawn powerup sau khi trò chơi đã bắt đầu
+        console.log(`[Room ${roomId}] Bắt đầu spawner powerup sau khi trò chơi đã bắt đầu`);
+        rooms[roomId].powerupSpawner();
         socket.off('startGame', socketStartGame);
     };
     const socketLeaveRoom = () => {
@@ -564,5 +569,65 @@ io.on('connection', (socket) => {
     });
     socket.on('getPowerup', (powerup) => {
         socketGetPowerup(powerup);
+    });
+    socket.on('placeBomb', (data) => {
+        /**
+         * Goal:
+         * - Process bomb placement from a client
+         * - Broadcast bomb placement to all other clients in the room
+         * - Store the bomb data for tracking
+         */
+        const roomId = getRoom(socket.id, false);
+        if (!roomId)
+            return;
+        const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
+        if (playerIndex === -1)
+            return;
+        // Reset the player's powerup after use
+        rooms[roomId].players[playerIndex].powerup = null;
+        // Broadcast the bomb placement to all clients in the room
+        io.to(roomId).emit('bombPlaced', {
+            bombId: data.bombId,
+            x: data.x,
+            y: data.y,
+            ownerId: socket.id
+        });
+    });
+    socket.on('bombExploded', (data) => {
+        /**
+         * Goal:
+         * - Process bomb explosion from a client
+         * - Broadcast explosion to all other clients in the room
+         * - Xử lý đồng bộ vụ nổ qua server để tất cả client xử lý cùng thời điểm
+         */
+        const roomId = getRoom(socket.id, false);
+        if (!roomId)
+            return;
+        // Dừng nhận các sự kiện nổ khác cho cùng một quả bomb
+        // bằng cách tạo một bản ghi atomic về bomb đã nổ
+        if (!global.explodedBombs) {
+            global.explodedBombs = new Set();
+        }
+        // Nếu bomb này đã được xử lý nổ rồi thì bỏ qua
+        if (global.explodedBombs.has(data.bombId)) {
+            return;
+        }
+        // Đánh dấu bomb này đã nổ để tránh xử lý nhiều lần
+        global.explodedBombs.add(data.bombId);
+        console.log(`[BOMB] Xử lý nổ bomb ${data.bombId} và gửi lệnh nổ đến tất cả client`);
+        // Broadcast lệnh xử lý nổ bomb đến tất cả client trong phòng
+        io.to(roomId).emit('processBombExplosion', {
+            bombId: data.bombId,
+            x: data.x,
+            y: data.y,
+            ownerId: data.ownerId,
+            timestamp: data.timestamp || Date.now() // Đảm bảo luôn có timestamp
+        });
+        // Sau một thời gian, xóa bomb khỏi danh sách đã nổ để giải phóng bộ nhớ
+        setTimeout(() => {
+            if (global.explodedBombs && global.explodedBombs.has(data.bombId)) {
+                global.explodedBombs.delete(data.bombId);
+            }
+        }, 5000);
     });
 });

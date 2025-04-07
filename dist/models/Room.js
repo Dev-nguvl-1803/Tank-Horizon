@@ -39,6 +39,7 @@ class Room {
     _socket;
     _io;
     _settings;
+    _bombsSpawnedThisRound = 0;
     constructor(id, io, socket, settings, type) {
         this._id = id;
         this._io = io;
@@ -110,22 +111,59 @@ class Room {
     powerupSpawner() {
         if (this._powerupInterval) {
             clearInterval(this._powerupInterval);
+            this._powerupInterval = null;
+        }
+        // Reset số lượng bomb đã xuất hiện
+        this._bombsSpawnedThisRound = 0;
+        // Chỉ thiết lập interval nếu trò chơi đã bắt đầu
+        if (!this._gameInProgress) {
+            console.log(`[Room ${this._id}] Không spawn power-up vì trò chơi chưa bắt đầu`);
+            return;
         }
         this._powerupInterval = setInterval(() => {
-            if (this._powerups.length < 3) {
-                const powerup = this.createRandomPowerup();
+            // Nếu trò chơi đã kết thúc, dừng việc spawn power-up
+            if (!this._gameInProgress) {
+                if (this._powerupInterval) {
+                    clearInterval(this._powerupInterval);
+                    this._powerupInterval = null;
+                }
+                return;
+            }
+            // Chỉ tạo buff bomb nếu chưa đạt giới hạn 2 buff mỗi round
+            if (this._bombsSpawnedThisRound < 2) {
+                const powerup = this.createBombPowerup();
                 this._powerups.push(powerup);
                 this._io.to(this._id).emit('newPowerup', powerup);
+                // Tăng bộ đếm bomb đã xuất hiện
+                this._bombsSpawnedThisRound++;
+                console.log(`[Room ${this._id}] Đã tạo bomb powerup (${this._bombsSpawnedThisRound}/2)`);
+                // Nếu đã đạt giới hạn 2 bomb, xóa interval
+                if (this._bombsSpawnedThisRound >= 2) {
+                    if (this._powerupInterval) {
+                        clearInterval(this._powerupInterval);
+                        this._powerupInterval = null;
+                    }
+                }
             }
-        }, 10000);
+        }, 10000); // Tạo buff mỗi 10 giây cho đến khi đạt giới hạn
     }
-    createRandomPowerup() {
-        const types = ['gatling', 'lazer', 'shield', 'speed'];
-        const randomType = types[Math.floor(Math.random() * types.length)];
+    createBombPowerup() {
+        // Chỉ tạo buff bomb
+        const type = 'bomb';
+        // Kích thước của bản đồ
+        const tileSize = 68;
+        // Tạo vị trí ngẫu nhiên tránh lề và tường
+        // Tạo vị trí powerup ở giữa các ô để tránh tường
+        const col = Math.floor(Math.random() * 10) + 1;
+        const row = Math.floor(Math.random() * 10) + 1;
+        // Tính vị trí trung tâm của ô
+        const x = (col - 0.5) * tileSize;
+        const y = (row - 0.5) * tileSize;
         return {
-            x: Math.floor(Math.random() * 800),
-            y: Math.floor(Math.random() * 600),
-            type: randomType,
+            x: x,
+            y: y,
+            type: type,
+            name: 'Bomb',
             id: `powerup_${Date.now()}_${Math.floor(Math.random() * 1000)}`
         };
     }
@@ -142,9 +180,13 @@ class Room {
         }
         this._isResetting = true;
         this._round += 1;
-        this._gameInProgress = false;
+        this._gameInProgress = true;
         const newMap = this.generateRandomMap("ok");
         this._map = newMap;
+        // Reset số lượng bomb đã xuất hiện và kích hoạt lại powerupSpawner
+        console.log(`Đặt bom thôi`);
+        this._bombsSpawnedThisRound = 0;
+        this.powerupSpawner();
         for (const p of this._players) {
             p.alive = true;
             p.ready = false;

@@ -127,7 +127,36 @@ function sendPlayerLocation(x, y, rotation) {
 function fireBullet(x, y, angle, powerup = null) {
     if (!roomId || !gameInProgress) return;
 
+    // Check if powerup is bomb type and handle differently
+    if (powerup && powerup.type === 'bomb') {
+        placeBomb(x, y);
+        return;
+    }
+    
     socket.emit('sendBullet', { x, y, angle, powerup });
+}
+
+function placeBomb(x, y) {
+    if (!roomId || !gameInProgress) return;
+    
+    const bombId = `bomb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    // Emit event to server to place a bomb
+    socket.emit('placeBomb', {
+        x: x,
+        y: y,
+        bombId: bombId,
+        ownerId: socket.id
+    });
+    
+    // Reset powerup after use
+    currentPowerup = null;
+}
+
+function bombExploded(bombData) {
+    if (!roomId || !gameInProgress) return;
+    
+    socket.emit('bombExploded', bombData);
 }
 
 function bulletDestroyed(bulletOwnerId) {
@@ -293,6 +322,14 @@ function setupSocketCListeners() {
             window.updatePowerup(data.id, data.powerup);
         }
     });
+
+    socket.on('newPowerup', (powerup) => {
+        console.log('Nhận được powerup mới từ server:', powerup);
+        
+        if (window.handleNewPowerup) {
+            window.handleNewPowerup(powerup);
+        }
+    });
 }
 
 function logSocketEvent(direction, event, data) {
@@ -364,5 +401,7 @@ window.socketA = {
     fireBullet,
     bulletDestroyed,
     playerDied,
-    collectPowerup
+    collectPowerup,
+    placeBomb,
+    bombExploded
 };

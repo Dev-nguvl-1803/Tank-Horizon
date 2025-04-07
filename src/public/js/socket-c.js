@@ -46,14 +46,241 @@ class Scene extends Phaser.Scene {
         this.load.image('wall_x', '/assets/wall/tile_x.png');
         this.load.image('wall_y', '/assets/wall/tile_y.png');
 
+        // Tải các hình ảnh buff có sẵn trong thư mục
         this.load.image('powerup_booby', '/assets/buff/booby.png');
-        this.load.image('powerup_frag', '/assets/buff/frag.png');
         this.load.image('powerup_gatling', '/assets/buff/gatling.png');
         this.load.image('powerup_homing', '/assets/buff/homing-missile.png');
         this.load.image('powerup_lazer', '/assets/buff/lazer.png');
         this.load.image('powerup_ray', '/assets/buff/ray.png');
         this.load.image('powerup_rc', '/assets/buff/rc-missile.png');
+        this.load.image('powerup_bomb', '/assets/buff/bomb.png');
+        this.load.image('bomb_smoke', '/assets/buff/bomb_smoke.png');
+        this.load.image('bomb', '/assets/buff/bomb.png');
 
+        // Add bomb-specific functions
+        this.placeBomb = function(x, y, ownerId) {
+            console.log('Placing bomb at:', x, y);
+            
+            // Create bomb sprite
+            const bomb = this.physics.add.sprite(x, y, 'bomb');
+            bomb.setScale(0.4);
+            bomb.setDepth(2);
+            bomb.bombId = `bomb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            bomb.ownerId = ownerId;
+            bomb.isArmed = false;
+            
+            // Store the bomb reference
+            if (!this.bombs) this.bombs = {};
+            this.bombs[bomb.bombId] = bomb;
+            
+            // Create a safety timer (3 seconds)
+            this.time.delayedCall(3000, () => {
+                if (bomb && bomb.active) {
+                    bomb.isArmed = true;
+                    console.log('Bomb is now armed!');
+                    
+                    // Add a pulsing effect to indicate armed state
+                    this.tweens.add({
+                        targets: bomb,
+                        scale: { from: 0.35, to: 0.45 },
+                        duration: 500,
+                        yoyo: true,
+                        repeat: -1
+                    });
+                    
+                    // Add collision detection with players
+                    this.setupBombTrigger(bomb);
+                    
+                    // Emit event to tell other clients the bomb is armed
+                    socket.emit('bombArmed', {
+                        bombId: bomb.bombId,
+                        x: bomb.x,
+                        y: bomb.y
+                    });
+                }
+            });
+            
+            return bomb;
+        };
+        
+        this.setupBombTrigger = function(bomb) {
+            // Create trigger area around the bomb (larger than the bomb itself)
+            const triggerRadius = 50;
+            bomb.triggerArea = this.add.circle(bomb.x, bomb.y, triggerRadius, 0xff0000, 0.0);
+            this.physics.add.existing(bomb.triggerArea);
+            
+            // Check for players entering the trigger area
+            for (const id in this.playerSprites) {
+                const playerSprite = this.playerSprites[id];
+                this.physics.add.overlap(playerSprite, bomb.triggerArea, () => {
+                    if (bomb && bomb.active && bomb.isArmed) {
+                        this.explodeBomb(bomb);
+                    }
+                });
+            }
+        };
+        
+        this.explodeBomb = function(bomb) {
+            if (!bomb || !bomb.active) return;
+            if (bomb.isExploding) return;  // Prevent multiple explosions
+            
+            bomb.isExploding = true;
+            console.log('Bomb exploding!', bomb.bombId);
+            
+            // Notify server about explosion
+            socket.emit('bombExploded', {
+                bombId: bomb.bombId,
+                x: bomb.x,
+                y: bomb.y,
+                ownerId: bomb.ownerId,
+                timestamp: Date.now() // Thêm timestamp để đồng bộ thời gian nổ
+            });
+            
+            // Tạm dừng xử lý hiệu ứng và damage cho đến khi nhận được lệnh từ server
+            // để đảm bảo tất cả client xử lý vụ nổ cùng một thời điểm
+        };
+        
+        // Tách riêng phần xử lý hiệu ứng nổ và damage để server kiểm soát
+        this.processBombExplosion = function(bombData) {
+            console.log('Xử lý vụ nổ bomb:', bombData);
+            
+            // Create explosion effect
+            this.createExplosionEffect(bombData.x, bombData.y);
+            
+            // Apply camera shake
+            this.cameras.main.shake(200, 0.01);
+            
+            // Check which players are caught in the explosion
+            const explosionRadius = 100;
+            for (const id in this.playerSprites) {
+                const playerSprite = this.playerSprites[id];
+                if (!playerSprite || !playerSprite.active) continue;
+                
+                // Calculate distance from bomb to player
+                const distance = Phaser.Math.Distance.Between(
+                    bombData.x, bombData.y, 
+                    playerSprite.x, playerSprite.y
+                );
+                
+                if (distance <= explosionRadius) {
+                    console.log('Player caught in explosion:', id);
+                    // Kill the player caught in the explosion
+                    window.socketA.playerDied(id, bombData.ownerId);
+                }
+            }
+            
+            // Xử lý xóa bomb khỏi scene
+            if (this.bombs) {
+                // Xóa bomb từ data của scene
+                const bomb = this.bombs[bombData.bombId];
+                if (bomb && bomb.active) {
+                    console.log('Đang xóa bomb:', bombData.bombId);
+                    
+                    // Dừng tất cả tweens trên bomb (hiệu ứng nhấp nháy, v.v.)
+                    this.tweens.killTweensOf(bomb);
+                    
+                    // Xóa trigger area một cách an toàn
+                    if (bomb.triggerArea) {
+                        bomb.triggerArea.destroy();
+                        bomb.triggerArea = null;
+                    }
+                    
+                    // Xóa bomb sprite
+                    bomb.destroy();
+                    
+                    // Quan trọng: Xóa bomb từ object cache của scene
+                    delete this.bombs[bombData.bombId];
+                    
+                    console.log('Đã xóa bomb thành công:', bombData.bombId);
+                } else {
+                    // Tìm bomb trên bản đồ dựa vào tọa độ trong trường hợp ID không khớp
+                    let foundBomb = false;
+                    Object.keys(this.bombs).forEach(key => {
+                        const b = this.bombs[key];
+                        if (b && b.active) {
+                            const distance = Phaser.Math.Distance.Between(b.x, b.y, bombData.x, bombData.y);
+                            if (distance < 10) { // Nếu bomb ở gần vị trí nổ
+                                console.log('Tìm thấy bomb gần vị trí nổ, đang xóa:', key);
+                                
+                                // Xóa giống như trên
+                                this.tweens.killTweensOf(b);
+                                if (b.triggerArea) {
+                                    b.triggerArea.destroy();
+                                    b.triggerArea = null;
+                                }
+                                b.destroy();
+                                delete this.bombs[key];
+                                foundBomb = true;
+                            }
+                        }
+                    });
+                    
+                    if (!foundBomb) {
+                        console.log('Không tìm thấy bomb nào để xóa tại:', bombData.x, bombData.y);
+                    }
+                }
+            }
+            
+            // Thêm log để debug
+            console.log('Số lượng bomb hiện tại sau khi xử lý:', this.bombs ? Object.keys(this.bombs).length : 0);
+        };
+        
+        this.createExplosionEffect = function(x, y) {
+            // Create a smoke particle effect
+            const smokeCloud = this.add.sprite(x, y, 'bomb_smoke');
+            smokeCloud.setScale(0.1);
+            smokeCloud.setAlpha(0.9);
+            smokeCloud.setDepth(5); // Above players but below UI
+            
+            // Create smoke animation
+            this.tweens.add({
+                targets: smokeCloud,
+                scale: { from: 0.5, to: 2.5 },
+                alpha: { from: 0.8, to: 0 },
+                duration: 2000,
+                ease: 'Power1',
+                onComplete: () => {
+                    smokeCloud.destroy();
+                }
+            });
+        };
+        
+        // Handle remote bomb explosion
+        this.handleRemoteBombExplosion = function(data) {
+            const bomb = this.bombs ? this.bombs[data.bombId] : null;
+            if (bomb && bomb.active) {
+                this.explodeBomb(bomb);
+            } else {
+                // If we don't have this bomb locally, just show the explosion effect
+                this.createExplosionEffect(data.x, data.y);
+                this.cameras.main.shake(200, 0.01);
+            }
+        };
+        
+        // Add ability to handle a newly placed bomb from another player
+        this.handleRemoteBombPlaced = function(data) {
+            const bomb = this.placeBomb(data.x, data.y, data.ownerId);
+            bomb.bombId = data.bombId; // Use the same ID sent by the owner
+        };
+
+        // Hàm xử lý khi một power-up được thu thập
+        this.collectPowerup = function(powerupId) {
+            // Tìm power-up trong nhóm power-up
+            this.powerups.getChildren().forEach((powerupSprite) => {
+                if (powerupSprite.powerupId === powerupId) {
+                    // Hiệu ứng trước khi xóa
+                    this.tweens.add({
+                        targets: powerupSprite,
+                        scale: { from: 0.4, to: 0 },
+                        alpha: { from: 1, to: 0 },
+                        duration: 300,
+                        onComplete: () => {
+                            powerupSprite.destroy();
+                        }
+                    });
+                }
+            });
+        };
 
         this.initializeGame = function (data) {
             console.log('Initializing game with data:', data);
@@ -144,6 +371,21 @@ class Scene extends Phaser.Scene {
                     }
                 }
                 this.bulletSprites = {};
+            }
+
+            // Xóa tất cả các bomb khi reset map
+            if (this.bombs) {
+                for (let key in this.bombs) {
+                    if (this.bombs.hasOwnProperty(key)) {
+                        // Xóa vùng kích hoạt của bomb nếu có
+                        if (this.bombs[key].triggerArea) {
+                            this.bombs[key].triggerArea.destroy();
+                        }
+                        // Xóa bomb
+                        this.bombs[key].destroy();
+                    }
+                }
+                this.bombs = {};
             }
 
             if (this.playerSprites) {
@@ -520,6 +762,79 @@ class Scene extends Phaser.Scene {
             }
         };
 
+        // Thêm hàm xử lý powerup mới xuất hiện trên bản đồ
+        this.handleNewPowerup = function(powerup) {
+            console.log('Adding new powerup:', powerup);
+            
+            let powerupSprite;
+            
+            // Chọn hình ảnh dựa trên loại power-up
+            switch(powerup.type) {
+                case 'bomb':
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_bomb');
+                    break;
+                case 'gatling':
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_gatling');
+                    break;
+                case 'lazer':
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_lazer');
+                    break;
+                case 'shield':
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_booby');
+                    break;
+                case 'speed':
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_homing');
+                    break;
+                default:
+                    powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_gatling');
+            }
+            
+            powerupSprite.setScale(0.4);
+            powerupSprite.setDepth(1);
+            powerupSprite.powerupId = powerup.id;
+            powerupSprite.powerupType = powerup.type;
+            
+            // Thêm hiệu ứng xoay
+            this.tweens.add({
+                targets: powerupSprite,
+                rotation: { from: 0, to: Math.PI * 2 },
+                duration: 3000,
+                repeat: -1
+            });
+            
+            // Thêm hiệu ứng nhảy lên xuống
+            this.tweens.add({
+                targets: powerupSprite,
+                y: { from: powerup.y - 5, to: powerup.y + 5 },
+                duration: 1000,
+                yoyo: true,
+                repeat: -1
+            });
+            
+            this.powerups.add(powerupSprite);
+            
+            // Thêm collision detection với người chơi
+            for (const id in this.playerSprites) {
+                const playerSprite = this.playerSprites[id];
+                this.physics.add.overlap(playerSprite, powerupSprite, () => {
+                    console.log('Player collected powerup:', powerup.type);
+                    
+                    // Chỉ người chơi hiện tại gửi thông báo thu thập powerup
+                    if (id === socket.id) {
+                        window.socketA.collectPowerup({
+                            id: powerup.id,
+                            type: powerup.type,
+                            name: powerup.type.charAt(0).toUpperCase() + powerup.type.slice(1)
+                        });
+                    }
+                    
+                    // Xóa powerup
+                    powerupSprite.destroy();
+                });
+            }
+            
+            return powerupSprite;
+        };
 
         window.initializeGame = this.initializeGame.bind(this);
         window.resetGame = this.resetGame.bind(this);
@@ -530,6 +845,11 @@ class Scene extends Phaser.Scene {
         window.enterSpectateMode = this.enterSpectateMode.bind(this);
         window.removePlayer = this.removePlayer.bind(this);
         window.updatePowerup = this.updatePlayerPowerup.bind(this);
+        window.placeBomb = this.placeBomb.bind(this);
+        window.handleRemoteBombExplosion = this.handleRemoteBombExplosion.bind(this);
+        window.handleRemoteBombPlaced = this.handleRemoteBombPlaced.bind(this);
+        window.handleNewPowerup = this.handleNewPowerup.bind(this);
+        window.collectPowerup = this.collectPowerup.bind(this);
 
         console.log('Phaser game methods registered');
 
@@ -552,8 +872,9 @@ class Scene extends Phaser.Scene {
             this.endGame(this.playersData[0]);
             this.gameInProgress = false;
             alert("Chỉ còn một người chơi, bạn đã thắng!");
-        } else if (alivePlayers === 1 && this.gameInProgress && resetInProgress === 0 && this.playersData.length > 1) {
-            console.log('Only one player alive, initiating reset sequence...');
+        } else if ((alivePlayers === 1 || alivePlayers === 0) && this.gameInProgress && resetInProgress === 0 && this.playersData.length > 1) {
+            // Sửa đổi điều kiện để xử lý cả trường hợp tất cả người chơi cùng chết (alivePlayers === 0)
+            console.log('Reset sequence initiated. Players alive:', alivePlayers);
             resetInProgress = 1;
 
             setTimeout(() => {
@@ -616,10 +937,29 @@ class Scene extends Phaser.Scene {
             }
         }
 
+        // Khi nhấn nút space (bắn)
         if (Phaser.Input.Keyboard.JustDown(this.fireKey) && this.currentAmmo > 0 && this.canShoot) {
             this.canShoot = false;
             this.currentAmmo--;
-            window.socketA.fireBullet(playerSprite.x - 6.5, playerSprite.y, playerSprite.rotation, currentPowerup);
+            
+            // Kiểm tra xem người chơi có buff bomb không
+            if (currentPowerup && currentPowerup.type === 'bomb') {
+                console.log('Đặt bomb thay vì bắn đạn!');
+                window.socketA.placeBomb(playerSprite.x, playerSprite.y);
+                
+                // Reset currentPowerup sau khi sử dụng
+                currentPowerup = null;
+                
+                // Xóa hiển thị powerup trên tank
+                if (playerSprite.powerupIcon) {
+                    playerSprite.powerupIcon.destroy();
+                    playerSprite.powerupIcon = null;
+                }
+            } else {
+                // Bắn đạn bình thường nếu không có buff bomb
+                window.socketA.fireBullet(playerSprite.x - 6.5, playerSprite.y, playerSprite.rotation, currentPowerup);
+            }
+            
             this.time.delayedCall(200, () => { this.canShoot = true; });
         }
 
@@ -656,7 +996,7 @@ function initPhaserGame() {
             default: 'arcade',
             arcade: {
                 gravity: { y: 0 },
-                debug: false
+                debug: true
             }
         },
         backgroundColor: '#FFFFFF',
@@ -918,6 +1258,31 @@ window.gameC = {
         if (window.game && window.game.scene && window.game.scene.scenes[0]) {
             window.game.scene.scenes[0].updatePlayerPowerup(playerId, powerup);
         }
+    },
+    placeBomb: function (x, y, ownerId) {
+        if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+            return window.game.scene.scenes[0].placeBomb(x, y, ownerId);
+        }
+    },
+    handleRemoteBombExplosion: function (data) {
+        if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+            window.game.scene.scenes[0].handleRemoteBombExplosion(data);
+        }
+    },
+    handleRemoteBombPlaced: function (data) {
+        if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+            window.game.scene.scenes[0].handleRemoteBombPlaced(data);
+        }
+    },
+    handleNewPowerup: function (powerup) {
+        if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+            window.game.scene.scenes[0].handleNewPowerup(powerup);
+        }
+    },
+    collectPowerup: function (powerupId) {
+        if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+            window.game.scene.scenes[0].collectPowerup(powerupId);
+        }
     }
 };
 
@@ -1059,33 +1424,92 @@ socket.on('resetGame', (data) => {
     window.gameC.resetGame(data);
 });
 
-function getRandomPositionSafe(self, maxAttempts = 20) {
+socket.on('bombPlaced', (data) => {
+    console.log('Bomb placed event received:', data);
+    window.gameC.handleRemoteBombPlaced(data);
+});
 
+socket.on('bombExploded', (data) => {
+    console.log('Bomb exploded event received:', data);
+    window.gameC.handleRemoteBombExplosion(data);
+});
+
+socket.on('processBombExplosion', (data) => {
+    console.log('Nhận lệnh processBombExplosion từ server:', data);
+    
+    // Đảm bảo rằng tất cả client xử lý vụ nổ cùng một lúc, thay vì dựa vào client phát hiện va chạm với bomb
+    if (window.game && window.game.scene && window.game.scene.scenes[0]) {
+        window.game.scene.scenes[0].processBombExplosion(data);
+    }
+});
+
+socket.on('newPowerup', (powerup) => {
+    console.log('New powerup event received:', powerup);
+    window.gameC.handleNewPowerup(powerup);
+});
+
+function getRandomPositionSafe(self, maxAttempts = 20) {
+    console.log('[SAFE SPAWN] Tìm vị trí an toàn để spawn player...');
+    
+    // Kích thước bản đồ và an toàn
+    const mapSize = 680;
+    const safeMargin = 50; // Margin an toàn từ rìa bản đồ
+    const tankSize = 24;   // Kích thước xe tăng
+    const safeZoneSize = 40; // Khoảng cách an toàn từ tường
+    
+    // Các vị trí spawn cố định ở 4 góc, được đảm bảo an toàn
+    const safeCorners = [
+        { x: 100, y: 100 },
+        { x: mapSize - 100, y: 100 },
+        { x: 100, y: mapSize - 100 },
+        { x: mapSize - 100, y: mapSize - 100 }
+    ];
+    
+    // Trước tiên thử tìm vị trí ngẫu nhiên an toàn
     let position;
     let attempt = 0;
     let safePosition = false;
     
     do {
         attempt++;
-    
+        
+        // Sinh vị trí ngẫu nhiên, tránh xa rìa bản đồ
         position = {
-            x: Phaser.Math.Between(50, 630), 
-            y: Phaser.Math.Between(50, 630)
+            x: Phaser.Math.Between(safeMargin, mapSize - safeMargin), 
+            y: Phaser.Math.Between(safeMargin, mapSize - safeMargin)
         };
         
-    
+        // Tạo sprite tạm thời để kiểm tra va chạm
         const tempSprite = self.physics.add.sprite(position.x, position.y, 'tank');
         tempSprite.setScale(0.7);
         
-    
+        // Thiết lập hitbox phù hợp với xe tăng
         const hitboxWidth = Math.floor(tempSprite.width * 0.8);
         const hitboxHeight = Math.floor(tempSprite.height * 0.8);
         tempSprite.body.setSize(hitboxWidth, hitboxHeight, true);
         
-    
-        const isOverlapping = self.physics.overlap(tempSprite, self.walls);
+        // Kiểm tra overlap với tường, dùng phương pháp cải tiến hơn
+        let isOverlapping = false;
         
-    
+        // Kiểm tra va chạm với tất cả các tường
+        if (self.walls) {
+            self.walls.getChildren().forEach(wall => {
+                // Tính khoảng cách từ tâm vị trí đến tâm tường
+                const dx = Math.abs(position.x - wall.x);
+                const dy = Math.abs(position.y - wall.y);
+                
+                // Tổng kích thước hitbox (xe tăng + tường + vùng an toàn)
+                const combinedWidth = (hitboxWidth / 2) + (wall.width / 2) + safeZoneSize;
+                const combinedHeight = (hitboxHeight / 2) + (wall.height / 2) + safeZoneSize;
+                
+                // Kiểm tra va chạm "mở rộng" (bao gồm vùng an toàn)
+                if (dx < combinedWidth && dy < combinedHeight) {
+                    isOverlapping = true;
+                }
+            });
+        }
+        
+        // Kiểm tra overlap với các player khác
         let overlapsWithPlayer = false;
         for (const id in self.playerSprites) {
             if (self.physics.overlap(tempSprite, self.playerSprites[id])) {
@@ -1094,28 +1518,29 @@ function getRandomPositionSafe(self, maxAttempts = 20) {
             }
         }
         
-    
+        // Vị trí an toàn khi không bị chồng lấp với tường hoặc player khác
         safePosition = !isOverlapping && !overlapsWithPlayer;
         
-    
+        // Hủy sprite tạm
         tempSprite.destroy();
+        
+        // Log debug
+        if (attempt % 5 === 0) {
+            console.log(`[SAFE SPAWN] Đã thử ${attempt} vị trí, tiếp tục tìm kiếm...`);
+        }
         
     } while (!safePosition && attempt < maxAttempts);
     
-
-
+    // Nếu không tìm được vị trí an toàn sau nhiều lần thử, sử dụng một trong các vị trí cố định
     if (!safePosition) {
-        const corners = [
-            { x: 100, y: 100 },
-            { x: 580, y: 100 },
-            { x: 100, y: 580 },
-            { x: 580, y: 580 }
-        ];
-        return corners[Math.floor(Math.random() * corners.length)];
+        console.log(`[SAFE SPAWN] Không tìm thấy vị trí ngẫu nhiên an toàn sau ${maxAttempts} lần thử. Sử dụng vị trí cố định.`);
+        return safeCorners[Math.floor(Math.random() * safeCorners.length)];
     }
     
+    console.log(`[SAFE SPAWN] Tìm thấy vị trí an toàn sau ${attempt} lần thử: (${position.x}, ${position.y})`);
     return position;
 }
+
 function resetMap() {
     socket.on('prepareNewGame', datas => {
         mapper = datas.board;
@@ -1165,4 +1590,19 @@ window.updatePowerup = function (playerId, powerup) {
 };
 window.initializeGame = function (data) {
     window.gameC.initializeGame(data);
+};
+window.placeBomb = function (x, y, ownerId) {
+    return window.gameC.placeBomb(x, y, ownerId);
+};
+window.handleRemoteBombExplosion = function (data) {
+    window.gameC.handleRemoteBombExplosion(data);
+};
+window.handleRemoteBombPlaced = function (data) {
+    window.gameC.handleRemoteBombPlaced(data);
+};
+window.handleNewPowerup = function (powerup) {
+    window.gameC.handleNewPowerup(powerup);
+};
+window.collectPowerup = function (powerupId) {
+    window.gameC.collectPowerup(powerupId);
 };

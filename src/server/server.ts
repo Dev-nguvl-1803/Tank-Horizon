@@ -11,6 +11,10 @@ import dbConfig from './dbconfig';
 import path from 'path';
 import dbs from "./dbconfig";
 
+declare global {
+  var explodedBombs: Set<string>;
+}
+
 // Cáu hình server 🙏
 /**
  * Goal:
@@ -157,11 +161,6 @@ io.on('connection', (socket) => {
      * - Đưa người chơi vào phòng chờ
      * - Dữ liệu gameType sẽ được lấy từ PhaserGame nhưng mặc định sẽ để là "null" để test
      */
-    // const nameExists = await checkPlayerNameExists(data.name);
-    // if (nameExists) {
-    //   socket.emit('nameExists');
-    //   return;
-    // }
 
     const gameType = "null"
     const id = generateId(roomIds);
@@ -304,14 +303,16 @@ io.on('connection', (socket) => {
     }
 
     rooms[roomId].gameInProgress = true;
-
-    // Emit drawBoard để đồng bộ bản đồ khi trò chơi bắt đầu
+    
     io.to(roomId).emit('drawBoard', rooms[roomId].map);
 
     io.to(roomId).emit('gameStart', {
       board: rooms[roomId].map,
       players: rooms[roomId].players
     });
+    
+    console.log(`[Room ${roomId}] Bắt đầu spawner powerup sau khi trò chơi đã bắt đầu`);
+    rooms[roomId].powerupSpawner();
 
     socket.off('startGame', socketStartGame);
   }
@@ -605,7 +606,6 @@ io.on('connection', (socket) => {
     socket.off('getPowerup', socketGetPowerup);
   }
 
-  // SOCKET EVENTS ===========================================================
   socket.on('newGame', async (data) => {
     socketNewGame(data);
   });
@@ -641,8 +641,67 @@ io.on('connection', (socket) => {
   });
   socket.on('resetMap', () => {
     socketResetMap();
-  })
+  });
   socket.on('getPowerup', (powerup) => {
     socketGetPowerup(powerup);
+  });
+  socket.on('placeBomb', (data) => {
+    /**
+     * Goal:
+     * - Process bomb placement from a client
+     * - Broadcast bomb placement to all other clients in the room
+     * - Store the bomb data for tracking
+     */
+    const roomId = getRoom(socket.id, false);
+    if (!roomId) return;
+
+    const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
+    if (playerIndex === -1) return;
+    
+    rooms[roomId].players[playerIndex].powerup = null;
+    
+    io.to(roomId).emit('bombPlaced', {
+      bombId: data.bombId,
+      x: data.x,
+      y: data.y,
+      ownerId: socket.id
+    });
+  });
+
+  socket.on('bombExploded', (data) => {
+    /**
+     * Goal:
+     * - Process bomb explosion from a client
+     * - Broadcast explosion to all other clients in the room
+     * - Xử lý đồng bộ vụ nổ qua server để tất cả client xử lý cùng thời điểm
+     */
+    const roomId = getRoom(socket.id, false);
+    if (!roomId) return;
+
+    if (!global.explodedBombs) {
+      global.explodedBombs = new Set();
+    }
+
+    if (global.explodedBombs.has(data.bombId)) {
+      return;
+    }
+
+    global.explodedBombs.add(data.bombId);
+
+    console.log(`[BOMB] Xử lý nổ bomb ${data.bombId} và gửi lệnh nổ đến tất cả client`);
+
+    io.to(roomId).emit('processBombExplosion', {
+      bombId: data.bombId,
+      x: data.x,
+      y: data.y,
+      ownerId: data.ownerId,
+    
+    });
+
+    setTimeout(() => {
+      if (global.explodedBombs && global.explodedBombs.has(data.bombId)) {
+        global.explodedBombs.delete(data.bombId);
+      }
+    }, 5000);
   });
 });
