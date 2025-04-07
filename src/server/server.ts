@@ -66,17 +66,7 @@ async function initializeDb() {
 }
 initializeDb();
 
-app.get('/sql', (req, res) => {
-  pool.request()
-    .query('SELECT * FROM WHATHEFUCK') // EDIT PLS
-    .then(result => {
-      res.json({ res: result.recordset });
-    })
-    .catch(err => {
-      console.error('SQL error', err);
-      res.status(500).send({ res: 'Error executing query' });
-    });
-});
+
 
 // Nối mạng 🙏
 /**
