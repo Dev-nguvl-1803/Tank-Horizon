@@ -37,7 +37,16 @@ const generateBoard = (type: string) => {
         }
     }
 
+    type = "ok"
     if (type !== "null") {
+        // Reset toàn bộ bản đồ
+        for (let i = 0; i < board.length; i++) {
+            board[i].top = true;
+            board[i].right = true;
+            board[i].bottom = true;
+            board[i].left = true;
+            board[i].ableToConnect = true;
+        }
         for (let i = 0; i < board.length; i++) {
             if (board[i].row === 1 && board[i].col === 1) {
                 continue;
@@ -63,6 +72,7 @@ const generateBoard = (type: string) => {
                 }
             }
         }
+        // printBoard(board)
     } else {
         for (let i of board) {
             if (i.row === 1) i.top = true
@@ -82,7 +92,6 @@ const generateId = (ids: string[]): string => {
         id += tokens[Math.floor(Math.random() * tokens.length)]
     }
 
-    console.log("DKSLFJSDKLFJDSKLFJDSKLF", ids)
     if (!ids.includes(id)) {
         return id
     }
@@ -95,28 +104,16 @@ export {
 }
 // ---------------------------------------------------------------------------------------------------------------
 
-// const printBoard = (board: Array<{ left: boolean; top: boolean; bottom: boolean; right: boolean; col: number; }>) => { //in toàn bộ bảng
-//     for (let i of board) { //đối với mỗi ô của bảng
-//         let string = '' //tạo một chuỗi trống
-//         i.left ? string += '[' : string += ' ' //nếu tường bên trái của ô là true, thêm [ vào chuỗi
-//         i.top ? string += '^' : string += ' ' //nếu tường phía trên của ô là true, thêm ^ vào chuỗi
-//         i.bottom ? string += '_' : string += ' ' //if the tile's bottom wall is true, add _ to the string
-//         i.right ? string += ']' : string += ' ' //if the tile's right wall is true, add ] to the string
-//         process.stdout.write(string) //write out the string to the console (using process.stdout.write to make sure there is no line return)
-//         if (i.col === 10) { //after there is 10 columns, create a line return
-//             console.log() //line return
-//         }
-//     }
-// }
-
-// const printItem = i => {
-//     let string = '' //creates an empty string
-//     i.left ? string += '[' : string += ' ' //if the tile's left wall is true, add [ to the string
-//     i.top ? string += '^' : string += ' ' //if the tile's top wall is true, add ^ to the string
-//     i.bottom ? string += '_' : string += ' ' //if the tile's bottom wall is true, add _ to the string
-//     i.right ? string += ']' : string += ' '  //if the tile's right wall is true, add ] to the string
-//     process.stdout.write(string) //write out the string to the console (using process.stdout.write to make sure there is no line return) 
-//     if (i.col === 10) { //after there is 10 columns, create a line return 
-//         console.log() //line return
-//     }    
-// }
+const printBoard = (board: Array<{ left: boolean; top: boolean; bottom: boolean; right: boolean; col: number; }>) => { //in toàn bộ bảng
+    for (let i of board) { //đối với mỗi ô của bảng
+        let string = '' //tạo một chuỗi trống
+        i.left ? string += '[' : string += ' ' //nếu tường bên trái của ô là true, thêm [ vào chuỗi
+        i.top ? string += '^' : string += ' ' //nếu tường phía trên của ô là true, thêm ^ vào chuỗi
+        i.bottom ? string += '_' : string += ' ' //if the tile's bottom wall is true, add _ to the string
+        i.right ? string += ']' : string += ' ' //if the tile's right wall is true, add ] to the string
+        process.stdout.write(string) //write out the string to the console (using process.stdout.write to make sure there is no line return)
+        if (i.col === 10) { //after there is 10 columns, create a line return
+            console.log() //line return
+        }
+    }
+}

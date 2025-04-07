@@ -1,3 +1,33 @@
+/**
+ * Player class representing a player in the game
+ * 
+ * - id: Unique identifier for the player
+ * - roomId: Identifier for the room the player is in
+ * - name: Name of the player
+ * - color: Color of the player
+ * - x: X coordinate of the player
+ * - y: Y coordinate of the player
+ * - rotation: Rotation of the player
+ * - score: Score of the player
+ * - alive: Whether the player is alive or not
+ * - powerup: Current powerup of the player
+ * - ready: Whether the player is ready or not
+ * - bulletCount: Number of bullets the player has
+ * - lastPosition: Last position of the player
+ * - lastRotation: Last rotation of the player
+ * - isHost: Whether the player is the host of the room
+ * 
+ * -> Class Player thực hiện xử lý tiến trình cơ bản:
+ *    - Quản lý trạn thái alive
+ *    - Quản lý thông tin player (isHost, color, name)
+ *    - Quản lý tọa độ (x, y), rotation, spawn
+ *    - Quản lý thông tin chơi (Score, roomId, bulletCount)
+ * 
+ * -> Tiến trình tối ưu:
+ *    - Sử dụng lasPosition và lastRotation để gửi đi đẩy dữ liệu x y mới, trong đó sử dụng nó để tránh các vấn đề về mạng, cho phép biết last position và lastRotation của player
+ */
+
+
 export class Player {
   private _id: string;
   private _roomId: string;
@@ -13,7 +43,7 @@ export class Player {
   private _bulletCount: number = 0;
   private _lastPosition: { x: number, y: number } = { x: 0, y: 0 };
   private _lastRotation: number = 0;
-  private _isHost: boolean = false; // Thêm thuộc tính này
+  private _isHost: boolean = false;
 
   constructor(id: string, name: string, roomId: string) {
     this._id = id;

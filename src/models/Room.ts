@@ -2,24 +2,50 @@ import { Server, Socket } from 'socket.io';
 import { Player } from './Player';
 import { Powerup } from './Powerup';
 import { generateBoard } from '../server/map';
+import { Bullet } from './Bullet';
+
+/**
+ * Responder:
+ * - _id roomId
+ * - _players players storage
+ * - _round current round number
+ * - _highScorePlayer player with the highest score
+ * - _map current game map
+ * - _gameInProgress indicates if the game is ongoing
+ * - _powerups active powerups in the game
+ * - _powerupInterval interval for spawning powerups 
+ * - _isResetting indicates if the game is resetting
+ * - _socket socket connection for the room
+ * - _io server instance for the room
+ * - _settings game settings configuration
+ * 
+ * -> Room đóng 2 vai trò (Tính lưu trữ + Tính xử lý):
+ *    + Lưu trữ thông tin phòng
+ *    + Lưu trữ thông tin người chơi
+ * 
+ *    + Xử lý bản đồ (generate map, draw walls)
+ *    + Xử lý KHỞI TẠO player (score, color, alive status, score)
+ *    + Xử lý trận đấu (round counter, reset game, prepare new game)
+*/
 
 export class Room {
   private _id: string;
   private _players: Player[] = [];
   private _round: number = 1;
   private _highScorePlayer: string = '';
-  private _map: any; // Bản đồ ngẫu nhiên
+  private _map: any;
   private _gameInProgress: boolean = false;
   private _powerups: Powerup[] = [];
   private _powerupInterval: NodeJS.Timeout | null = null;
-  private _inCheckFunc: number = 0;
+  private _isResetting: boolean = false;
   private _socket: Socket;
   private _io: Server;
   private _settings: {
-    maxPlayers: number; 
+    maxPlayers: number;
     maxBullets: number;
     pointsToWin: number;
   };
+  private _bombsSpawnedThisRound: number = 0;
 
   constructor(id: string, io: Server, socket: Socket, settings: any, type: string) {
     this._id = id;
@@ -29,7 +55,6 @@ export class Room {
     this._map = this.generateRandomMap(type);
   }
 
-  // Getters
   get id(): string {
     return this._id;
   }
@@ -58,32 +83,31 @@ export class Room {
     this._gameInProgress = value;
   }
 
-  // Quản lý người chơi
   newPlayer(id: string, name: string): void {
-    // Kiểm tra số lượng người chơi tối đa
+
     if (this._players.length >= this._settings.maxPlayers) {
       return;
     }
-    
-    // Tạo người chơi mới
+
+
     const player = new Player(id, name, this._id);
-    
-    // Thiết lập màu sắc
+
+
     this.setColor(player);
-    
-    // Thêm vào danh sách người chơi
+
+
     this._players.push(player);
-    
-    // Thông báo cho người chơi khác
-    this._socket.broadcast.to(this._id).emit('newPlayer', { 
-      player: player, 
-      index: this.players.length 
+
+
+    this._socket.broadcast.to(this._id).emit('newPlayer', {
+      player: player,
+      index: this.players.length
     });
-    
-    // Thông báo vị trí người chơi
+
+
     this._socket.emit('playerLocation', this._players);
-    
-    // Cập nhật người chơi điểm cao nhất
+
+
     this.updateHighScorePlayer();
   }
 
@@ -104,113 +128,89 @@ export class Room {
     }
   }
 
-  // Thiết lập màu sắc cho người chơi
+
   setColor(player: Player): void {
     const possible = ["red", "yellow", "green", "blue"];
-    
-    // Lọc các màu đã được sử dụng
+
+
     const usedColors: string[] = this._players.map(p => p.color);
     const availableColors = possible.filter(color => !usedColors.includes(color));
-    
-    // Nếu còn màu trống, gán màu cho người chơi
+
+
     if (availableColors.length > 0) {
       player.color = availableColors[0];
     } else {
-      // Mặc định nếu hết màu
+
       player.color = "purple";
     }
   }
 
-  // Quản lý vòng chơi
-  checkNewRound(type: string): void {
-    let alivePlayers = 0;
-    for (const p of this.players) {
-      if (p.alive) {
-        ++alivePlayers;
-      }
-    }
 
-    if (alivePlayers <= 1) {
-      ++this._inCheckFunc;
-      setTimeout(() => {
-        if (this._inCheckFunc > 1) {
-          --this._inCheckFunc;
-          return;
-        }
-
-        // Cộng điểm cho người thắng
-        for (const p of this.players) {
-          if (p.alive) {
-            const playerIndex = this._players.indexOf(p);
-            this._players[playerIndex].score += 100;
-            
-            // Kiểm tra điều kiện thắng
-            if (this._players[playerIndex].score >= this._settings.pointsToWin) {
-              this._io.to(this._id).emit('gameOver', {
-                winner: this._players[playerIndex],
-                players: this._players
-              });
-              
-              // Dọn dẹp phòng hoặc chuẩn bị vòng mới
-              this.prepareNewGame();
-              return;
-            }
-          }
-        }
-
-        this.newRound(type);
-        --this._inCheckFunc;
-      }, 5000);
-    }
-  }
-
-  newRound(type: string): void {
-    ++this._round;
-    
-    // Tạo bản đồ mới
-    this._map = this.generateRandomMap(type);
-    
-    // Đặt lại trạng thái người chơi
-    for (const p of this._players) {
-      p.spawn();
-    }
-    
-    // Xóa tất cả powerups hiện tại
-    this._powerups = [];
-    
-    // Thông báo vòng mới
-    this._io.to(this._id).emit('newRound', {
-      round: this._round,
-      map: this._map,
-      players: this._players
-    });
-  }
-
-  // Quản lý powerup
   powerupSpawner(): void {
     if (this._powerupInterval) {
       clearInterval(this._powerupInterval);
+      this._powerupInterval = null;
     }
-    
+
+    this._bombsSpawnedThisRound = 0;
+
+    if (!this._gameInProgress) {
+      console.log(`[Room ${this._id}] Không spawn power-up vì trò chơi chưa bắt đầu`);
+      return;
+    }
+
     this._powerupInterval = setInterval(() => {
-      // Giới hạn số lượng powerup trên bản đồ
-      if (this._powerups.length < 3) {
-        const powerup = this.createRandomPowerup();
+      // Nếu trò chơi đã kết thúc, dừng spawn power-up
+      if (!this._gameInProgress) {
+        if (this._powerupInterval) {
+          clearInterval(this._powerupInterval);
+          this._powerupInterval = null;
+        }
+        return;
+      }
+      
+      // Chỉ tạo buff bomb nếu chưa đạt giới hạn 2 buff mỗi round
+      if (this._bombsSpawnedThisRound < 2) {
+        const powerup = this.createBombPowerup();
         this._powerups.push(powerup);
         this._io.to(this._id).emit('newPowerup', powerup);
+        
+        // Tăng bộ đếm bomb đã xuất hiện
+        this._bombsSpawnedThisRound++;
+        
+        console.log(`[Room ${this._id}] Đã tạo bomb powerup (${this._bombsSpawnedThisRound}/2)`);
+        
+        // Nếu đã đạt giới hạn 2 bomb, xóa interval
+        if (this._bombsSpawnedThisRound >= 2) {
+          if (this._powerupInterval) {
+            clearInterval(this._powerupInterval);
+            this._powerupInterval = null;
+          }
+        }
       }
-    }, 10000); // Tạo powerup mới mỗi 10 giây
+    }, 10000); // Tạo buff mỗi 10 giây cho đến khi đạt giới hạn
   }
 
-  createRandomPowerup(): any {
-    // Logic tạo powerup ngẫu nhiên
-    const types = ['gatling', 'lazer', 'shield', 'speed'];
-    const randomType = types[Math.floor(Math.random() * types.length)];
+  createBombPowerup(): any {
+    const type = 'bomb';
+    
+    // Kích thước của bản đồ
+    const tileSize = 68;
+    
+    // Tạo vị trí ngẫu nhiên tránh lề và tường
+    // Tạo vị trí powerup ở giữa các ô để tránh tường
+    const col = Math.floor(Math.random() * 10) + 1;
+    const row = Math.floor(Math.random() * 10) + 1;
+    
+    // Tính vị trí trung tâm của ô
+    const x = (col - 0.5) * tileSize;
+    const y = (row - 0.5) * tileSize;
     
     return {
-      x: Math.floor(Math.random() * 800),
-      y: Math.floor(Math.random() * 600),
-      type: randomType,
+      x: x,
+      y: y,
+      type: type,
+      name: 'Bomb',
       id: `powerup_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     };
   }
@@ -222,85 +222,108 @@ export class Room {
     }
   }
 
-  // Chuẩn bị trò chơi mới
+
   prepareNewGame(): void {
-    this._round = 1;
-    this._gameInProgress = false;
+
+    if (this._isResetting) {
+      console.log('Reset already in progress, skipping...');
+      return;
+    }
+
+    this._isResetting = true;
+    this._round += 1;
+    this._gameInProgress = true;
+
+
+    const newMap = this.generateRandomMap("ok");
+    this._map = newMap;
     
-    // Reset điểm số người chơi
+    // Reset số lượng bomb đã xuất hiện và kích hoạt lại powerupSpawner
+    console.log(`Đặt bom thôi`)
+    this._bombsSpawnedThisRound = 0;
+    this.powerupSpawner();
+    
     for (const p of this._players) {
-      p.score = 0;
       p.alive = true;
       p.ready = false;
     }
-    
-    // Thông báo chuẩn bị trò chơi mới
+
+    // Emit drawBoard event to ensure map synchronization
     this._io.to(this._id).emit('prepareNewGame', {
       roomId: this._id,
-      players: this._players
+      players: this._players.map(p => p.toJSON()),
+      map: this._map,
+      round: this._round
     });
+
+    for(let i = 0; i < 1; i++) {
+      this._io.to(this._id).emit('drawBoard', this._map);
+    }
+
+    setTimeout(() => {
+      this._isResetting = false;
+      console.log("Reset flag cleared");
+    }, 1000);
   }
 
-  // Cập nhật người chơi điểm cao nhất
   updateHighScorePlayer(): void {
     if (this._players.length === 0) {
       this._highScorePlayer = '';
       return;
     }
-    
+
     let maxScore = -1;
     let maxScorePlayer = '';
-    
+
     for (const player of this._players) {
       if (player.score > maxScore) {
         maxScore = player.score;
         maxScorePlayer = player.name;
       }
     }
-    
+
     this._highScorePlayer = maxScorePlayer;
   }
 
-  // Tạo bản đồ ngẫu nhiên
+
   private generateRandomMap(type: string): any {
-    // Gọi hàm generateBoard từ module map.ts
+
     const board = generateBoard(type);
-    
-    // Chuyển đổi board thành định dạng map mà game cần
+
+
     const walls: { x: number, y: number, width: number, height: number }[] = [];
     const spawns: { x: number, y: number }[] = [];
-    
-    // Kích thước một ô trên bản đồ game
+
+
     const tileSize = 68;
-    
-    // Duyệt qua tất cả các ô của bản đồ
+
+
     for (let i = 0; i < board.length; i++) {
       const cell = board[i];
       const x = (cell.col - 1) * tileSize;
       const y = (cell.row - 1) * tileSize;
-      
-      // Thêm tường nếu có
-      // Tường phía trên
+
+
+
       if (cell.top) {
         walls.push({
           x: x,
           y: y,
           width: tileSize,
-          height: 4 // Độ dày của tường
+          height: 4
         });
       }
-      
-      // Tường bên trái
+
       if (cell.left) {
         walls.push({
           x: x,
           y: y,
-          width: 4, // Độ dày của tường
+          width: 4,
           height: tileSize
         });
       }
-      
-      // Tường phía dưới - chỉ cần thêm cho hàng cuối
+
+
       if (cell.row === 10 && cell.bottom) {
         walls.push({
           x: x,
@@ -309,8 +332,8 @@ export class Room {
           height: 4
         });
       }
-      
-      // Tường bên phải - chỉ cần thêm cho cột cuối
+
+
       if (cell.col === 10 && cell.right) {
         walls.push({
           x: x + tileSize - 4,
@@ -320,27 +343,25 @@ export class Room {
         });
       }
     }
-    
-    // Tạo các điểm xuất hiện ngẫu nhiên cho người chơi
-    // Đảm bảo điểm xuất hiện không nằm trên tường
+
     const spawnPositions = [
-      { row: 1, col: 1 }, // Góc trên bên trái
-      { row: 1, col: 10 }, // Góc trên bên phải
-      { row: 10, col: 1 }, // Góc dưới bên trái
-      { row: 10, col: 10 } // Góc dưới bên phải
+      { row: 1, col: 1 },
+      { row: 1, col: 10 },
+      { row: 10, col: 1 },
+      { row: 10, col: 10 }
     ];
-    
+
     for (const pos of spawnPositions) {
       spawns.push({
         x: (pos.col - 1) * tileSize + tileSize / 2,
         y: (pos.row - 1) * tileSize + tileSize / 2
       });
     }
-    
+
     return {
       walls,
-      spawns,
-      board, // Lưu lại board gốc để có thể sử dụng sau này
+
+      board,
       size: {
         width: 10 * tileSize,
         height: 10 * tileSize
@@ -348,7 +369,7 @@ export class Room {
     };
   }
 
-  // Chuyển đổi thành JSON để gửi qua socket
+
   toJSON() {
     return {
       id: this._id,
@@ -359,5 +380,10 @@ export class Room {
       gameInProgress: this._gameInProgress,
       powerups: this._powerups
     };
+  }
+
+
+  isResetting(): boolean {
+    return this._isResetting;
   }
 }
