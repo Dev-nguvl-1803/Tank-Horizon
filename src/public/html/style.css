@@ -44,7 +44,7 @@ html, body {
     }
     
     .logo {
-      width: 70%;
+      width: 60%;
       margin-top: 1%;  /* Vi tri logo de top-center */
     }
 
@@ -179,7 +179,12 @@ html, body {
     display: flex;
   }
   
-  .tank-horizon {
+  .tank-horizon { 
+    width: 65%;
+    margin-top: 10%;
+  }
+
+  .rizon {
     width: 70%;
   }
 
