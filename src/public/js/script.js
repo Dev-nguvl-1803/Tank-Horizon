@@ -29,6 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    const historyBtn = document.getElementById('btnHistory');
+    const historyWindow = document.getElementById('History-window');
+    const historyClose = document.getElementById('close-History');
+
+    historyBtn.addEventListener('click', () => {
+        historyWindow.classList.remove('hidden');
+    });
+
+    historyClose.addEventListener('click', () => {
+        historyWindow.classList.add('hidden');
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
     const creditBtn = document.getElementById('btnCredit');
     const creditWindow = document.getElementById('Credit-window');
     const closeCredit = document.getElementById('close-credit');
