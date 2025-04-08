@@ -336,6 +336,7 @@ neu la class = dung .element*/
   width: 30%;
   height: 12%;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #windowTaoPhong button:hover{
@@ -385,6 +386,7 @@ neu la class = dung .element*/
   cursor: pointer;
   gap: 10px;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #windowKhanGia button{
@@ -397,6 +399,7 @@ neu la class = dung .element*/
   width: 30%;
   height: 12%;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #NhapTen {
