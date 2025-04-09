@@ -40,7 +40,17 @@ app.use('/js', express.static(path.join(publicPath, 'js'), {
   }
 }));
 
+app.use('/', express.static(path.join(publicPath, 'html'), {
+  setHeaders: (res, filePath) => {
+    if (path.extname(filePath) === '.css') {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
+
 app.use('/assets', express.static(path.join(publicPath, 'assets')));
+
+app.use('/Source', express.static(path.join(publicPath, 'Source')));
 
 const playerDbs = new Map();
 
@@ -138,9 +148,6 @@ const getRoom = (id: string, isRoomId: boolean): string | undefined => {
 
 
 io.on('connection', (socket) => {
-
-  socket.emit('socketBConnected');
-
   // ROOM SOCKET EVENTS ===========================================================
   const socketNewGame = (data: any) => {
     /**
