@@ -12,7 +12,7 @@
 </head>
 
 <body>
-    <!-- Test thu thong bao va moi loai -->
+    <!-- Main Screen /w 4 button: Play, Setting, Credit, History -->
     <div class="container" id="menu">
         <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
         <button class="button" id="play-btn">Chơi</button>
@@ -22,10 +22,21 @@
             <h3>Cài đặt</h3>
             <label>
                 Cài đặt nút bấm:
-                <h4>Âm Lượng: <input type="range" min="0" max="100" value="0" id="sound-volume"></h4>
+                <h4>Âm Lượng: <input type="range" min="0" max="100" value="50" id="sound-volume"></h4>
             </label>
         </div>
         <button class="button" id="btnCredit">Nhà sáng tạo</button>
+        <div class="lich-su">
+            <button class="button" id="btnHistory">Lịch sử</button>
+        </div>
+        
+        <!-- Background Music -->
+        <audio id="background-music" loop>
+            <source src="../Source/TD.mp3" type="audio/mpeg">
+            Your browser does not support the audio tag.
+        </audio>
+
+        <!-- Leaderboard -->
         <div class="leaderboardbox">
             <h2>Bảng xếp hạng</h2>
             <table>
@@ -57,11 +68,37 @@
         </div>
     </div>
 
+    <!-- History -->
+    <div id="History-window" class="History-window hidden">
+        <img src="../Source/finally.png" id="close-History" class="close-btn" alt="Close">
+        <div class="center-history">
+        <img src="../Source/tank.png" class="logo-hisory" alt="Tank Horizon">
+        <div class="history-frame">
+            <div class="search-bar">
+                <img src="../Source/Search.png" alt="Search Icon" />
+                <input type="text" placeholder="Tìm kiếm tên...." />
+              </div>
+            <div class="history-header">
+                <div>Device</div>
+                <div>User</div>
+                <div>K/D</div>
+                <div>Round</div>
+                <div>Win/Lose</div>
+                <div>Date</div>
+            </div>
+            <div class="history-content">
+
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Credit -->
     <div id="Credit-window" class="Credit-window hidden">
         <div id="Credit">
             <img src="../Source/finally.png" id="close-credit" class="close-btn" alt="Close">
             <div class="center-container">
-                <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
+                <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon">
                 <div class="outer-container">
                     <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
                     <div class="inner-container">
@@ -112,6 +149,7 @@
         </div>
     </div>
 
+    <!-- Play UI: Create Room -->
     <div id="Create-room" class="Create-room hidden">
         <img src="../Source/finally.png" id="close-createroom" class="close-create" alt="Close">
         <div class="container-room">
@@ -140,6 +178,7 @@
         </div>
     </div>
 
+    <!-- Play UI: Join Room -->
     <div id="Join-room" class="Join-room hidden">
         <img src="../Source/finally.png" id="close-joinroom" class="close-create" alt="Close">
         <div class="container-room">
@@ -167,11 +206,7 @@
         </div>
     </div>
 
-    <audio id="background-music" loop>
-        <source src="../Source/TD.mp3" type="audio/mpeg">
-        Your browser does not support the audio tag.
-    </audio>
-
+    <!-- Play UI -->
     <div id="play" class="gameplay" style="display: none;">
         <img src="../Source/finally.png" id="close-play" class="close-btn" alt="Close">
         <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
@@ -179,7 +214,7 @@
         <div id="windowTaoPhong" class="TaoPhong">
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
-            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required>
+            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required style="font-size: 0.7vw;">
             <button>Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
@@ -189,8 +224,8 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 Mã phòng:
             </div>
-            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
-            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
+            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required style="font-size: 0.7vw;">
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required style="font-size: 0.7vw;">
             <div id="btnContain">
                 <button id="joinGame">Tự động tham gia</button>
                 <button id="btnJoinroom">Tham gia ngay</button>

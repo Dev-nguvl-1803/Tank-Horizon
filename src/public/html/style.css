@@ -43,6 +43,20 @@ html, body {
       transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
     }
     
+    #btnHistory{
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background-color: #C1BCB6;
+      width: 15%
+    }
+
+    #btnHistory:hover {
+      color: #F0EAE4;
+      background-color: #8E8984;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
     .logo {
       width: 70%;
       margin-top: 1%;  /* Vi tri logo de top-center */
@@ -182,6 +196,7 @@ html, body {
   .tank-horizon {
     width: 70%;
   }
+
 
 .center-container {
     text-decoration: none;
@@ -336,6 +351,7 @@ neu la class = dung .element*/
   width: 30%;
   height: 12%;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #windowTaoPhong button:hover{
@@ -385,6 +401,7 @@ neu la class = dung .element*/
   cursor: pointer;
   gap: 10px;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #windowKhanGia button{
@@ -397,6 +414,7 @@ neu la class = dung .element*/
   width: 30%;
   height: 12%;
   transition-duration: 0.4s;
+  font-size: 0.7vw;
 }
 
 #NhapTen {
@@ -621,4 +639,127 @@ input[type=text], select {
 
 @keyframes fadeOut {
   to { opacity: 0; }
+}
+
+/* History*/
+
+.logo-hisory {
+  width: 70%;
+  padding-left: 10%;
+}
+
+.history-frame {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 80%;  
+  background-color: #DBD6CF; 
+  border: 3px solid #000000; 
+  border-radius: 20px;
+  margin: 0 auto; 
+  padding: 2%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.search-bar {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  width: 80%;
+  height: 5vh;
+  color: #8E8984;
+  background-color: #ECE6DE; 
+  border: 2px solid #000000;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  text-transform: 12%;
+}
+
+.search-bar input {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1vw;
+  opacity:0.6; /* Mờ nhẹ */
+}
+
+.search-bar img{
+  width: 4%;
+  height: auto;
+}
+
+.history-header {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 90%;
+  background-color: #ECE6DE;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-around;
+  padding: 2% 0;
+  font-weight: bold;
+  margin-bottom: 2%;
+}
+
+.history-content {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 90%;
+  height: 35vh;
+  background-color: #ECE6DE;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.center-history {
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  width: 70%;
+  height: auto;
+  align-items: center;
+  margin: 1vh 15vw;
+  font-size: 1.2vw;
+}
+
+#windowTaoPhong input {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 45%;
+  background: transparent;
+  font-size: 0.9vw;
+  opacity:0.6; /* Mờ nhẹ */
+}
+
+#windowThamGiaPhong input {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 45%;
+  background: transparent;
+  font-size: 0.9vw;
+  opacity:0.6; /* Mờ nhẹ */
+}
+
+#windowKhanGia input {
+  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-weight: bold;
+  color: #8E8984;
+  width: 45%;
+  background: transparent;
+  font-size: 0.9vw;
+  opacity:0.6; /* Mờ nhẹ */
 }

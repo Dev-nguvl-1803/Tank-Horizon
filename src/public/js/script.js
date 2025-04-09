@@ -29,6 +29,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    const historyBtn = document.getElementById('btnHistory');
+    const historyWindow = document.getElementById('History-window');
+    const historyClose = document.getElementById('close-History');
+    const playMenu = document.getElementById("menu");
+
+    historyBtn.addEventListener('click', () => {
+        historyWindow.classList.remove('hidden');
+    });
+
+    historyClose.addEventListener('click', () => {
+        historyWindow.classList.add('hidden');
+    });
+    
+    historyBtn.addEventListener("click", function () {
+        playMenu.style.display = "none"; // Hide menu
+        historyWindow.style.display = "block"; // Show game-container only
+    });
+
+    historyClose.addEventListener("click", function () {
+        historyWindow.style.display = "none"; // Hide game-container
+        playMenu.style.display = "flex"; // Show menu again
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
     const creditBtn = document.getElementById('btnCredit');
     const creditWindow = document.getElementById('Credit-window');
     const closeCredit = document.getElementById('close-credit');
