@@ -2,7 +2,7 @@
   "name": "tank-horizon",
   "version": "1.0.0",
   "description": "Tank bumbumb",
-  "main": "build.js",
+  "main": "dist/server/server.js",
   "scripts": {
     "d": "node build.js && node dist/server/server.js"
   },
