@@ -785,7 +785,7 @@ input[type=text], select {
 }
 
 .fade-out-intro {
-  animation: fadeOutIntro 2s ease-in-out forwards;
+  animation: fadeOutIntro 3s ease-in-out forwards;
 }
 
 @keyframes logoFade {
@@ -797,7 +797,7 @@ input[type=text], select {
 
 @keyframes fadeOutIntro {
   from { opacity: 1; }
-  to { opacity: 0; visibility: hidden; }
+  to { opacity: 0; visibility: hidden;}
 }
 
 
