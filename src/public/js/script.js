@@ -494,3 +494,22 @@ function showNotification(message) {
     document.body.appendChild(noti);
     setTimeout(() => noti.remove(), 3000);
 }
+
+window.onload = function () {
+    // Sau 4s: logo đã xong fade in/out, bắt đầu fade out intro container
+    setTimeout(() => {
+      const intro = document.getElementById("intro");
+      const main = document.getElementById("main-content");
+  
+      // Thêm lớp để intro fade out mượt
+      intro.classList.add("fade-out-intro");
+  
+      // Sau khi fade out xong (1s), ẩn intro và hiện main
+      setTimeout(() => {
+        intro.style.display = "none";
+        main.style.display = "block";
+        main.classList.add("fade-in");
+      }, 1000);
+    }, 4000); // 4s là thời gian logo animation
+  };
+  

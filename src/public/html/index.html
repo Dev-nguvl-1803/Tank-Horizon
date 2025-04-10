@@ -12,230 +12,239 @@
 </head>
 
 <body>
-    <!-- Main Screen /w 4 button: Play, Setting, Credit, History -->
-    <div class="container" id="menu">
-        <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
-        <button class="button" id="play-btn">Chơi</button>
-        <button class="button" id="settings-btn">Cài đặt</button>
-        <div id="settings-window" class="settings-window hidden">
-            <img src="../Source/finally.png" id="close-settings" class="close-btn" alt="Close">
-            <h3>Cài đặt</h3>
-            <label>
-                Cài đặt nút bấm:
-                <h4>Âm Lượng: <input type="range" min="0" max="100" value="50" id="sound-volume"></h4>
-            </label>
-        </div>
-        <button class="button" id="btnCredit">Nhà sáng tạo</button>
-        <div class="lich-su">
-            <button class="button" id="btnHistory">Lịch sử</button>
-        </div>
-        
-        <!-- Background Music -->
-        <audio id="background-music" loop>
-            <source src="../Source/TD.mp3" type="audio/mpeg">
-            Your browser does not support the audio tag.
-        </audio>
-
-        <!-- Leaderboard -->
-        <div class="leaderboardbox">
-            <h2>Bảng xếp hạng</h2>
-            <table>
-                <tr>
-                    <th>Tên</th>
-                    <th>Điểm</th>
-                </tr>
-                <tr>
-                    <td>1. alterGolden</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>2. Foob</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>3. XD</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>4. Mika Glazer</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>5. Sigmarium</td>
-                    <td>N/A</td>
-                </tr>
-            </table>
-        </div>
+    <div id="intro">
+        <img src="../Source/Group 46.png" alt="Devnguvl Studio Logo" class="intro" />
     </div>
-
-    <!-- History -->
-    <div id="History-window" class="History-window hidden">
-        <img src="../Source/finally.png" id="close-History" class="close-btn" alt="Close">
-        <div class="center-history">
-        <img src="../Source/tank.png" class="logo-hisory" alt="Tank Horizon">
-        <div class="history-frame">
-            <div class="search-bar">
-                <img src="../Source/Search.png" alt="Search Icon" />
-                <input type="text" placeholder="Tìm kiếm tên...." />
-              </div>
-            <div class="history-header">
-                <div>Device</div>
-                <div>User</div>
-                <div>K/D</div>
-                <div>Round</div>
-                <div>Win/Lose</div>
-                <div>Date</div>
+    <div id="main-content" style="display: none;">
+        <!-- Main Screen /w 4 button: Play, Setting, Credit, History -->
+        <div class="container" id="menu">
+            <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
+            <button class="button" id="play-btn">Chơi</button>
+            <button class="button" id="settings-btn">Cài đặt</button>
+            <div id="settings-window" class="settings-window hidden">
+                <img src="../Source/finally.png" id="close-settings" class="close-btn" alt="Close">
+                <h3>Cài đặt</h3>
+                <label>
+                    Cài đặt nút bấm:
+                    <h4>Âm Lượng: <input type="range" min="0" max="100" value="50" id="sound-volume"></h4>
+                </label>
             </div>
-            <div class="history-content">
+            <button class="button" id="btnCredit">Nhà sáng tạo</button>
+            <div class="lich-su">
+                <button class="button" id="btnHistory">Lịch sử</button>
+            </div>
 
+            <!-- Background Music -->
+            <audio id="background-music" loop>
+                <source src="../Source/TD.mp3" type="audio/mpeg">
+                Your browser does not support the audio tag.
+            </audio>
+
+            <!-- Leaderboard -->
+            <div class="leaderboardbox">
+                <h2>Bảng xếp hạng</h2>
+                <table>
+                    <tr>
+                        <th>Tên</th>
+                        <th>Điểm</th>
+                    </tr>
+                    <tr>
+                        <td>1. alterGolden</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>2. Foob</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>3. XD</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>4. Mika Glazer</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>5. Sigmarium</td>
+                        <td>N/A</td>
+                    </tr>
+                </table>
             </div>
         </div>
-        </div>
-    </div>
 
-    <!-- Credit -->
-    <div id="Credit-window" class="Credit-window hidden">
-        <div id="Credit">
-            <img src="../Source/finally.png" id="close-credit" class="close-btn" alt="Close">
-            <div class="center-container">
-                <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon">
-                <div class="outer-container">
-                    <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
-                    <div class="inner-container">
-                        <div class="team">Team "Ngọt"</div>
-                        <div class="member-list">
-                            <div>
-                                <p><b>Hoàng Quý Long<br>
-                                        Cao Phan Minh Hạnh Túc<br>
-                                        Trần Hải Nam<br>
-                                        Trần Minh Quân<br>
-                                        Nguyễn Tuấn Tài<br>
-                                        Nguyễn Tiến Thành<br>
-                                        Phạm Hà Anh</b></p>
-                            </div>
-                            <div>
-                                <p><b>Product Owner<br>
-                                        Scrum<br>
-                                        Dev leader<br>
-                                        Developer<br>
-                                        Developer<br>
-                                        Developer<br>
-                                        Designer</b></p>
-                            </div>
-                        </div>
-                        <div class="music"><b>Nhạc nền trong game</b></div>
-                        <div class="music-list">
-                            <div>
-                                <p><b>"Day"<br>
-                                        "Astro Party BGM"</b></p>
-                            </div>
-                            <div>
-                                <p><b>Terraria<br>
-                                        Astro Party</b></p>
-                            </div>
-                        </div>
+        <!-- History -->
+        <div id="History-window" class="History-window hidden">
+            <img src="../Source/finally.png" id="close-History" class="close-btn" alt="Close">
+            <div class="center-history">
+                <img src="../Source/tank.png" class="logo-hisory" alt="Tank Horizon">
+                <div class="history-frame">
+                    <div class="search-bar">
+                        <img src="../Source/Search.png" alt="Search Icon" />
+                        <input type="text" placeholder="Tìm kiếm tên...." />
                     </div>
-                    <div class="social-icons">
-                        <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="../Source/discord.png" alt="Discord"></a>
-                        <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img src="../Source/reddit.png"
-                                alt="Reddit"></a>
-                        <a href="https://tank-horizon.fandom.com/vi/wiki/Trang_Ch%C3%ADnh" target="_blank"><img
-                                src="../Source/fandom.png" alt="Fandom"></a>
-                        <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img src="../Source/github.png"
-                                alt="GitHub"></a>
+                    <div class="history-header">
+                        <div>Device</div>
+                        <div>User</div>
+                        <div>K/D</div>
+                        <div>Round</div>
+                        <div>Win/Lose</div>
+                        <div>Date</div>
+                    </div>
+                    <div class="history-content">
+
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Play UI: Create Room -->
-    <div id="Create-room" class="Create-room hidden">
-        <img src="../Source/finally.png" id="close-createroom" class="close-create" alt="Close">
-        <div class="container-room">
-            <div class="title">Phòng chờ bắt đầu</div>
-            <div class="owner">Bạn là chủ phòng</div>
-            <div class="player-container">
-                <div class="player-box">
-                    <div class="kick-btn" title="Đuổi người chơi" id="player-box1">×</div>
-                    <div class="player-number" id="player-1"></div>
-                </div>
-                <div class="player-box">
-                    <div class="kick-btn" title="Đuổi người chơi" id="player-box2">×</div>
-                    <div class="player-number" id="player-2"></div>
-                </div>
-                <div class="player-box">
-                    <div class="kick-btn" title="Đuổi người chơi" id="player-box3">×</div>
-                    <div class="player-number" id="player-3"></div>
-                </div>
-                <div class="player-box">
-                    <div class="kick-btn" title="Đuổi người chơi" id="player-box4">×</div>
-                    <div class="player-number" id="player-4"></div>
+        <!-- Credit -->
+        <div id="Credit-window" class="Credit-window hidden">
+            <div id="Credit">
+                <img src="../Source/finally.png" id="close-credit" class="close-btn" alt="Close">
+                <div class="center-container">
+                    <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon">
+                    <div class="outer-container">
+                        <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
+                        <div class="inner-container">
+                            <div class="team">Team "Ngọt"</div>
+                            <div class="member-list">
+                                <div>
+                                    <p><b>Hoàng Quý Long<br>
+                                            Cao Phan Minh Hạnh Túc<br>
+                                            Trần Hải Nam<br>
+                                            Trần Minh Quân<br>
+                                            Nguyễn Tuấn Tài<br>
+                                            Nguyễn Tiến Thành<br>
+                                            Phạm Hà Anh</b></p>
+                                </div>
+                                <div>
+                                    <p><b>Product Owner<br>
+                                            Scrum<br>
+                                            Dev leader<br>
+                                            Developer<br>
+                                            Developer<br>
+                                            Developer<br>
+                                            Designer</b></p>
+                                </div>
+                            </div>
+                            <div class="music"><b>Nhạc nền trong game</b></div>
+                            <div class="music-list">
+                                <div>
+                                    <p><b>"Day"<br>
+                                            "Astro Party BGM"</b></p>
+                                </div>
+                                <div>
+                                    <p><b>Terraria<br>
+                                            Astro Party</b></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="social-icons">
+                            <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="../Source/discord.png"
+                                    alt="Discord"></a>
+                            <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img
+                                    src="../Source/reddit.png" alt="Reddit"></a>
+                            <a href="https://tank-horizon.fandom.com/vi/wiki/Trang_Ch%C3%ADnh" target="_blank"><img
+                                    src="../Source/fandom.png" alt="Fandom"></a>
+                            <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img
+                                    src="../Source/github.png" alt="GitHub"></a>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="start-text">Vui lòng chờ người chơi tham gia ...</div>
-            <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
         </div>
-    </div>
 
-    <!-- Play UI: Join Room -->
-    <div id="Join-room" class="Join-room hidden">
-        <img src="../Source/finally.png" id="close-joinroom" class="close-create" alt="Close">
-        <div class="container-room">
-            <div class="title">Phòng chờ bắt đầu</div>
-            <div class="owner">Bạn là người chơi</div>
-            <div class="player-container">
-                <div>
-                    <div class="player-box" id="player-box11"></div>
-                    <div class="player-number" id="player-11"></div>
+        <!-- Play UI: Create Room -->
+        <div id="Create-room" class="Create-room hidden">
+            <img src="../Source/finally.png" id="close-createroom" class="close-create" alt="Close">
+            <div class="container-room">
+                <div class="title">Phòng chờ bắt đầu</div>
+                <div class="owner">Bạn là chủ phòng</div>
+                <div class="player-container">
+                    <div class="player-box">
+                        <div class="kick-btn" title="Đuổi người chơi" id="player-box1">×</div>
+                        <div class="player-number" id="player-1"></div>
+                    </div>
+                    <div class="player-box">
+                        <div class="kick-btn" title="Đuổi người chơi" id="player-box2">×</div>
+                        <div class="player-number" id="player-2"></div>
+                    </div>
+                    <div class="player-box">
+                        <div class="kick-btn" title="Đuổi người chơi" id="player-box3">×</div>
+                        <div class="player-number" id="player-3"></div>
+                    </div>
+                    <div class="player-box">
+                        <div class="kick-btn" title="Đuổi người chơi" id="player-box4">×</div>
+                        <div class="player-number" id="player-4"></div>
+                    </div>
                 </div>
-                <div>
-                    <div class="player-box" id="player-box22"></div>
-                    <div class="player-number" id="player-22"></div>
-                </div>
-                <div>
-                    <div class="player-box" id="player-box33"></div>
-                    <div class="player-number" id="player-33"></div>
-                </div>
-                <div>
-                    <div class="player-box" id="player-box44"></div>
-                    <div class="player-number" id="player-44"></div>
-                </div>
+                <div class="start-text">Vui lòng chờ người chơi tham gia ...</div>
+                <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
             </div>
-            <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
         </div>
-    </div>
 
-    <!-- Play UI -->
-    <div id="play" class="gameplay" style="display: none;">
-        <img src="../Source/finally.png" id="close-play" class="close-btn" alt="Close">
-        <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
-        <div id="Description">Chọn các chế độ chơi của bạn</div>
-        <div id="windowTaoPhong" class="TaoPhong">
-            <h2>Tạo phòng chơi mới</h2>
-            <div id="NhapTen">Tên người chơi:</div>
-            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required style="font-size: 0.7vw;">
-            <button>Tạo phòng</button>
-        </div>
-        <div id="windowThamGiaPhong" class="TaoPhong">
-            <h2>Tham gia phòng chơi</h2>
-            <div id="ThamGia">
-                Tên người chơi:
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                Mã phòng:
+        <!-- Play UI: Join Room -->
+        <div id="Join-room" class="Join-room hidden">
+            <img src="../Source/finally.png" id="close-joinroom" class="close-create" alt="Close">
+            <div class="container-room">
+                <div class="title">Phòng chờ bắt đầu</div>
+                <div class="owner">Bạn là người chơi</div>
+                <div class="player-container">
+                    <div>
+                        <div class="player-box" id="player-box11"></div>
+                        <div class="player-number" id="player-11"></div>
+                    </div>
+                    <div>
+                        <div class="player-box" id="player-box22"></div>
+                        <div class="player-number" id="player-22"></div>
+                    </div>
+                    <div>
+                        <div class="player-box" id="player-box33"></div>
+                        <div class="player-number" id="player-33"></div>
+                    </div>
+                    <div>
+                        <div class="player-box" id="player-box44"></div>
+                        <div class="player-number" id="player-44"></div>
+                    </div>
+                </div>
+                <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
             </div>
-            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required style="font-size: 0.7vw;">
-            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required style="font-size: 0.7vw;">
-            <div id="btnContain">
-                <button id="joinGame">Tự động tham gia</button>
-                <button id="btnJoinroom">Tham gia ngay</button>
-            </div>
         </div>
-        <div id="windowKhanGia" class="TaoPhong">
-            <h2>Chế độ khán giả</h2>
-            <div id="KhanGia">Mã phòng:</div>
-            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required>
-            <button>Xem ngay</button>
+
+        <!-- Play UI -->
+        <div id="play" class="gameplay" style="display: none;">
+            <img src="../Source/finally.png" id="close-play" class="close-btn" alt="Close">
+            <div id="HelloWorld">CHẾ ĐỘ CHƠI</div>
+            <div id="Description">Chọn các chế độ chơi của bạn</div>
+            <div id="windowTaoPhong" class="TaoPhong">
+                <h2>Tạo phòng chơi mới</h2>
+                <div id="NhapTen">Tên người chơi:</div>
+                <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required
+                    style="font-size: 0.7vw;">
+                <button>Tạo phòng</button>
+            </div>
+            <div id="windowThamGiaPhong" class="TaoPhong">
+                <h2>Tham gia phòng chơi</h2>
+                <div id="ThamGia">
+                    Tên người chơi:
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    Mã phòng:
+                </div>
+                <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required
+                    style="font-size: 0.7vw;">
+                <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required
+                    style="font-size: 0.7vw;">
+                <div id="btnContain">
+                    <button id="joinGame">Tự động tham gia</button>
+                    <button id="btnJoinroom">Tham gia ngay</button>
+                </div>
+            </div>
+            <div id="windowKhanGia" class="TaoPhong">
+                <h2>Chế độ khán giả</h2>
+                <div id="KhanGia">Mã phòng:</div>
+                <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required>
+                <button>Xem ngay</button>
+            </div>
         </div>
     </div>
 
