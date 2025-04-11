@@ -1,15 +1,16 @@
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import * as sql from 'mssql';
-import { generateBoard, generateId } from './map';
-import { Player } from '../models/Player';
-import { Room } from '../models/Room';
+import path from 'path';
+import { Server } from 'socket.io';
 import { Bullet } from '../models/Bullet';
 import { Powerup } from '../models/Powerup';
+import { Room } from '../models/Room';
 import dbConfig from './dbconfig';
-import path from 'path';
-import dbs from "./dbconfig";
+import { generateId } from './map';
+import playerRoutes from './routes/player';
+import matchesRoutes from './routes/matches';
+import matchResultRoutes from './routes/matchResult';
 
 declare global {
   var explodedBombs: Set<string>;
@@ -29,6 +30,15 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+// Add middleware for parsing JSON requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Setup API routes
+app.use('/api/player', playerRoutes);
+app.use('/api/matches', matchesRoutes);
+app.use('/api/matchResult', matchResultRoutes);
+
 const publicPath = path.resolve(__dirname, '../../src/public');
 const htmlPath = path.join(publicPath, 'html');
 
@@ -39,20 +49,14 @@ app.use('/js', express.static(path.join(publicPath, 'js'), {
     }
   }
 }));
-
 app.use('/', express.static(path.join(publicPath, 'html'), {
   setHeaders: (res, filePath) => {
-    if (path.extname(filePath) === '.css') {
+    if (path.extname(filePath) === '.css') 
       res.setHeader('Content-Type', 'text/css');
-    }
   }
 }));
-
 app.use('/assets', express.static(path.join(publicPath, 'assets')));
-
 app.use('/Source', express.static(path.join(publicPath, 'Source')));
-
-const playerDbs = new Map();
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(htmlPath, 'index.html'));
@@ -64,6 +68,7 @@ server.listen(8080, () => {
 
 
 //SQL ===========================================================
+const playerDbs = new Map();
 let pool: sql.ConnectionPool;
 
 async function initializeDb() {
@@ -789,3 +794,5 @@ io.on('connection', (socket) => {
     }, 5000);
   });
 });
+
+export { pool };
