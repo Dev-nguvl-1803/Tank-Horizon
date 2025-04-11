@@ -1,219 +1,250 @@
-html, body {
-    height: 100%;
-    margin: 0;
-    font-size: 20px;
-  }
-  
-  body {
-    background-image: linear-gradient(to right, rgba(219, 207, 207, 1) 1px, transparent 1px), /**tao line trai**/
-                      linear-gradient(to bottom, rgba(219, 207, 207, 1) 1px, transparent 1px); /**tao line ngang**/
-    background-size: 50px 50px;
-    animation: moveBackground 20s linear infinite; /*animation di chuyen*/
-    position: relative;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-  }  /*Phan overflow, margin, padding, width, height hoi Nam, no chac lam cai phan nay*/
-  
-  @keyframes moveBackground {
-    from {
-      background-position: 0 0; /*Vi tri background*/
-    }
-    to {
-      background-position: -1000px -1000px; /*Toc do di chuyen background */
-    }
-  }
-
-    .button{
-      font-family: Arial, Helvetica, sans-serif; /*font chu*/
-      font-weight: bold; /*de dam*/
-      background-color: #C1BCB6; /* gray */
-      color: white; /*set text yea*/
-      padding: 1%;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 1vw;
-      border-radius: 8px; /*cai nay lam smooth cai button*/
-      border: 2px solid 000000; /*vien mau cua button*/
-      margin: 1%; /*space cua button*/
-      width: 20%;
-      transition-duration: 0.4s; /*toc do cua cai effect hover button yeaaa*/
-    }
-    
-    .logo {
-      width: 70%;
-      margin-top: 1%;  /* Vi tri logo de top-center */
-    }
-
-    .leaderboardbox{
-      font-family: Arial, Helvetica, sans-serif; /*font chu*/
-      font-weight: bold; /*de dam*/
-      background-color: #8E8984; /* gray */
-      color: white; /*set text yea*/
-      font-size: 1vw;
-      border-radius: 8px; /*cai nay lam smooth cai button*/
-      border: 2px solid #000000; /*vien mau cua button*/
-      width: 12%;
-      height: auto;
-      position: absolute;
-      top: 30%;
-      left: 1%;
-      text-align: center;
-    }
-
-  .container {
-    flex-direction: column;
-    align-items: center;  /* Vi tri content chinh gom 3 nut se de o giua */
-    display: flex;
-  }
-  
-  .button:hover { /*hover cua button*/
-    color: #F0EAE4;
-    background-color: #8E8984;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  }
-  
-  .button:active {
-    background-color: #454845;
-    box-shadow: 0 5px #666;
-    transform: translateY(4px);
-  }
-    
-  .settings-window {
-    font-family: Arial, Helvetica, sans-serif; /*font chu*/
-    font-weight: bold; /*de dam*/
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 20px;
-    color: #8E8984; /*set text yea*/
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #DBD6CF;
-    padding: 40px 80px;
-    border-radius: 8px;
-    border: 2px solid #000000;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .settings-window button{
-    background-color: #B8B8B8;
-    position: absolute;
-    left: 25px;
-    top: 25px;
-  }
-
-  .close-btn {
-    position: absolute;
-    top: 23px;
-    left: 25px;
-    height: 46px;
-    cursor: pointer; 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-size: 20px;
 }
 
-  .hidden {
-    display: none;
+body {
+  background-image: linear-gradient(to right, rgba(219, 207, 207, 1) 1px, transparent 1px),
+    /**tao line trai**/
+    linear-gradient(to bottom, rgba(219, 207, 207, 1) 1px, transparent 1px);
+  /**tao line ngang**/
+  background-size: 50px 50px;
+  animation: moveBackground 20s linear infinite;
+  /*animation di chuyen*/
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/*Phan overflow, margin, padding, width, height hoi Nam, no chac lam cai phan nay*/
+
+@keyframes moveBackground {
+  from {
+    background-position: 0 0;
+    /*Vi tri background*/
   }
 
-  #sound-volume {
-    -webkit-appearance: none;
-    width: 170px;
-    height: 8px;
-    border-radius: 10px;
-    background: #8E8984;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
+  to {
+    background-position: -1000px -1000px;
+    /*Toc do di chuyen background */
   }
-  
-  #sound-volume:hover {
-    opacity: 1;
+}
+
+.button {
+  font-family: Arial, Helvetica, sans-serif;
+  /*font chu*/
+  font-weight: bold;
+  /*de dam*/
+  background-color: #C1BCB6;
+  /* gray */
+  color: white;
+  /*set text yea*/
+  padding: 1%;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1vw;
+  border-radius: 8px;
+  /*cai nay lam smooth cai button*/
+  border: 2px solid 000000;
+  /*vien mau cua button*/
+  margin: 1%;
+  /*space cua button*/
+  width: 20%;
+  transition-duration: 0.4s;
+  /*toc do cua cai effect hover button yeaaa*/
+}
+
+.logo {
+  width: 70%;
+  margin-top: 1%;
+  /* Vi tri logo de top-center */
+}
+
+.leaderboardbox {
+  font-family: Arial, Helvetica, sans-serif;
+  /*font chu*/
+  font-weight: bold;
+  /*de dam*/
+  background-color: #8E8984;
+  /* gray */
+  color: white;
+  /*set text yea*/
+  font-size: 1vw;
+  border-radius: 8px;
+  /*cai nay lam smooth cai button*/
+  border: 2px solid #000000;
+  /*vien mau cua button*/
+  width: 12%;
+  height: auto;
+  position: absolute;
+  top: 30%;
+  left: 1%;
+  text-align: center;
+}
+
+.container {
+  flex-direction: column;
+  align-items: center;
+  /* Vi tri content chinh gom 3 nut se de o giua */
+  display: flex;
+}
+
+.button:hover {
+  /*hover cua button*/
+  color: #F0EAE4;
+  background-color: #8E8984;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.button:active {
+  background-color: #454845;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.settings-window {
+  font-family: Arial, Helvetica, sans-serif;
+  /*font chu*/
+  font-weight: bold;
+  /*de dam*/
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 20px;
+  color: #8E8984;
+  /*set text yea*/
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #DBD6CF;
+  padding: 40px 80px;
+  border-radius: 8px;
+  border: 2px solid #000000;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+}
+
+.settings-window button {
+  background-color: #B8B8B8;
+  position: absolute;
+  left: 25px;
+  top: 25px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 23px;
+  left: 25px;
+  height: 46px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+#sound-volume {
+  -webkit-appearance: none;
+  width: 170px;
+  height: 8px;
+  border-radius: 10px;
+  background: #8E8984;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+#sound-volume:hover {
+  opacity: 1;
+}
+
+#sound-volume::-moz-range-thumb {
+  background-color: #8E8984;
+}
+
+#sound-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #8E8984;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/*Cai nay la cho anh di chuyen ngau nhien tren map css*/
+.random-item {
+  position: absolute;
+  width: 90px;
+  height: 120px;
+  z-index: -1;
+  opacity: 0.7;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+@keyframes moveItem {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
   }
 
-  #sound-volume::-moz-range-thumb {
-    background-color: #8E8984;
+  50% {
+    transform: translate(100px, 50px) rotate(180deg);
   }
 
-  #sound-volume::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: #8E8984;
-    border-radius: 50%;
-    cursor: pointer;
+  100% {
+    transform: translate(0, 0) rotate(360deg);
   }
+}
 
-  /*Cai nay la cho anh di chuyen ngau nhien tren map css*/
-  .random-item {
-    position: absolute;
-    width: 120px;
-    height: 70px;
-    z-index: -1;
-    opacity: 0.7;
-    pointer-events: none;
-    transform-origin: center center;
-  }
-  
-  @keyframes moveItem {
-    0% {
-      transform: translate(0, 0) rotate(0deg);
-    }
-    50% {
-      transform: translate(100px, 50px) rotate(180deg);
-    }
-    100% {
-      transform: translate(0, 0) rotate(360deg);
-    }
-  }
+.Credit {
+  align-items: center;
+  display: flex;
+}
 
-  .Credit {
-    align-items: center;
-    display: flex;
-  }
-  
-  .tank-horizon {
-    width: 70%;
-  }
+.tank-horizon {
+  width: 70%;
+}
 
 .center-container {
-    text-decoration: none;
-    font-family: 'Inter', sans-serif;
-    width: 70%;
-    height: auto;
-    align-items: center;
-    margin: -80vh 27vw;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  width: 70%;
+  height: auto;
+  align-items: center;
+  margin: -80vh 27vw;
 }
 
 .outer-container {
-    width: 60%;
-    background: #DBD6CF;
-    padding: 2%;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    border: 2px solid black;
-    position: relative;
+  width: 60%;
+  background: #DBD6CF;
+  padding: 2%;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  border: 2px solid black;
+  position: relative;
 }
 
 .inner-container {
-    background: #ECE6DE;
-    padding: 1%;
-    border-radius: 10px;
-    color: #8E8984;
-    text-align: center;
-    border: 2px solid black;
+  background: #ECE6DE;
+  padding: 1%;
+  border-radius: 10px;
+  color: #8E8984;
+  text-align: center;
+  border: 2px solid black;
 }
 
 .team {
-    font-size: 2vw;
-    font-weight: bold;
+  font-size: 2vw;
+  font-weight: bold;
 }
 
 .member-list {
@@ -241,7 +272,8 @@ html, body {
 .social-icons {
   margin-top: 2%;
   display: flex;
-  gap: 2%; /* Adds spacing between icons */
+  gap: 2%;
+  /* Adds spacing between icons */
 }
 
 .social-icons a {
@@ -249,20 +281,21 @@ html, body {
 }
 
 .social-icons img {
-  width: 2vw; /* Reduce the size */
+  width: 2vw;
+  /* Reduce the size */
   height: auto;
 }
 
 .credit-text {
-    text-align: left;
-    margin-left: 5px;
-    color: #8E8984;
-    font-size: 0.89vw;
+  text-align: left;
+  margin-left: 5px;
+  color: #8E8984;
+  font-size: 0.89vw;
 }
 
 /* neu la id = dung #element
 neu la class = dung .element*/
-#HelloWorld{
+#HelloWorld {
   font-family: Inter, sans-serif;
   font: bold;
   padding-top: 35px;
@@ -272,7 +305,7 @@ neu la class = dung .element*/
   color: #8E8984;
 }
 
-#Description{
+#Description {
   font-family: Inter, sans-serif;
   font: bold;
   padding-right: 2vw;
@@ -280,7 +313,7 @@ neu la class = dung .element*/
   color: #8E8984;
 }
 
-#windowTaoPhong{
+#windowTaoPhong {
   font-family: Inter, sans-serif;
   font: bold;
   color: #8E8984;
@@ -295,7 +328,7 @@ neu la class = dung .element*/
   font-size: 1.5vw;
 }
 
-#windowThamGiaPhong{
+#windowThamGiaPhong {
   font-family: Inter, sans-serif;
   font: bold;
   color: #8E8984;
@@ -311,7 +344,7 @@ neu la class = dung .element*/
   font-size: 1.5vw;
 }
 
-#windowKhanGia{
+#windowKhanGia {
   font-family: Inter, sans-serif;
   font: bold;
   color: #8E8984;
@@ -326,7 +359,7 @@ neu la class = dung .element*/
   font-size: 1.5vw;
 }
 
-#windowTaoPhong button{
+#windowTaoPhong button {
   position: absolute;
   right: 20px;
   bottom: 25px;
@@ -338,7 +371,7 @@ neu la class = dung .element*/
   transition-duration: 0.4s;
 }
 
-#windowTaoPhong button:hover{
+#windowTaoPhong button:hover {
   color: rgb(199, 198, 198);
 }
 
@@ -348,7 +381,7 @@ neu la class = dung .element*/
   transform: translateY(1%);
 }
 
-#windowKhanGia button:hover{
+#windowKhanGia button:hover {
   color: rgb(199, 198, 198);
 }
 
@@ -358,7 +391,7 @@ neu la class = dung .element*/
   transform: translateY(1%);
 }
 
-#windowThamGiaPhong button:hover{
+#windowThamGiaPhong button:hover {
   color: rgb(199, 198, 198);
 }
 
@@ -370,13 +403,16 @@ neu la class = dung .element*/
 
 #buttonContainer {
   display: flex;
-  justify-content: space-between; /* Spaces buttons evenly */
+  justify-content: space-between;
+  /* Spaces buttons evenly */
   gap: 10px;
-  margin-top: 10px; /* Add space between inputs and buttons */
+  margin-top: 10px;
+  /* Add space between inputs and buttons */
 }
 
 #windowThamGiaPhong button {
-  position: static; /* Remove absolute positioning */
+  position: static;
+  /* Remove absolute positioning */
   width: 30%;
   padding: 2%;
   background-color: #F0EAE4;
@@ -387,7 +423,7 @@ neu la class = dung .element*/
   transition-duration: 0.4s;
 }
 
-#windowKhanGia button{
+#windowKhanGia button {
   position: absolute;
   right: 20px;
   bottom: 25px;
@@ -422,7 +458,8 @@ neu la class = dung .element*/
   display: flex;
 }
 
-input[type=text], select {
+input[type=text],
+select {
   width: 48%;
   padding: 12px;
   margin: 8px 0;
@@ -495,28 +532,31 @@ input[type=text], select {
 
 @keyframes animate-right {
   0% {
-      transform: translateX(100%);
-      opacity: 0;
+    transform: translateX(100%);
+    opacity: 0;
   }
+
   100% {
-      transform: translateX(0);
-      opacity: 1;
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes animate-right-out {
   0% {
-      transform: translateX(0);
-      opacity: 1;
+    transform: translateX(0);
+    opacity: 1;
   }
+
   100% {
-      transform: translateX(100%);
-      opacity: 0;
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 
 .error-popup {
-  font-family: Arial, Helvetica, sans-serif; /*font chu*/
+  font-family: Arial, Helvetica, sans-serif;
+  /*font chu*/
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -609,16 +649,23 @@ input[type=text], select {
   border: 2px solid #000;
   border-radius: 8px;
   padding: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 100;
   animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards;
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeOut {
-  to { opacity: 0; }
+  to {
+    opacity: 0;
+  }
 }

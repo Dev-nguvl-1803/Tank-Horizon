@@ -5,10 +5,9 @@ const volumeSlider = document.getElementById('sound-volume');
 backgroundMusic.volume = volumeSlider.value / 100; //trong khoang 0.0 va 1.0 nen can chia 100
 
 volumeSlider.addEventListener("input", function () {
-    backgroundMusic.volume = this.value / 100; //trong khoang 0.0 va 1.0 nen can chia 100
+    backgroundMusic.volume = this.value / 100;
 })
 
-// Start playing music on page load
 window.addEventListener('click', () => {
     backgroundMusic.play();
 }, { once: true });
@@ -37,14 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     creditBtn.addEventListener('click', () => {
         creditWindow.classList.remove('hidden');
         leaderboard.forEach(logo => {
-            logo.style.visibility = 'hidden'; // Hide logos
+            logo.style.visibility = 'hidden';
         });
     });
 
     closeCredit.addEventListener('click', () => {
         creditWindow.classList.add('hidden');
         leaderboard.forEach(logo => {
-            logo.style.visibility = 'visible'; // Show logos again
+            logo.style.visibility = 'visible';
         });
     });
 });
@@ -54,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
 var activeItems = 0;
 var maxItems = 5;
 
-// Hàm thêm item ngẫu nhiên
 function addRandomItems() {
     if (activeItems >= maxItems) {
         setTimeout(addRandomItems, 3000);
@@ -72,7 +70,6 @@ function addRandomItems() {
     item.src = images[Math.floor(Math.random() * images.length)];
     item.className = 'random-item';
 
-    // Xác định vị trí xuất phát
     var startPosition = Math.floor(Math.random() * 4);
     var endPosition = (startPosition + 2) % 4;
     var startX, startY, endX, endY;
@@ -94,7 +91,6 @@ function addRandomItems() {
     item.style.left = startX + 'px';
     item.style.top = startY + 'px';
 
-    // Tạo animation động
     var duration = 15 + Math.random() * 10;
     var uniqueId = new Date().getTime() + Math.random().toString(16).slice(2);
     var initialRotation = Math.random() * 360;
@@ -155,24 +151,6 @@ function addFallbackItems() {
     document.body.appendChild(item);
 }
 
-//Click Test-Event Socket se hien ra socket va dong code cua nam
-document.addEventListener("DOMContentLoaded", function () {
-    const testButton = document.getElementById("Test-Event");
-    const menu = document.getElementById("menu");
-    const gameContainer = document.getElementById("game-container");
-    const backButton = document.getElementById("back-to-menu");
-
-    testButton.addEventListener("click", function () {
-        menu.style.display = "none"; // Hide menu
-        gameContainer.style.display = "block"; // Show game-container only
-    });
-
-    backButton.addEventListener("click", function () {
-        gameContainer.style.display = "none"; // Hide game-container
-        menu.style.display = "flex"; // Show menu again
-    });
-});
-
 //Click Choi se hien ra 3 form
 document.addEventListener("DOMContentLoaded", function () {
     const playButton = document.getElementById("play-btn");
@@ -186,8 +164,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     closePlay.addEventListener("click", function () {
-        play.style.display = "none"; // Hide game-container
-        playMenu.style.display = "flex"; // Show menu again
+        play.style.display = "none";
+        playMenu.style.display = "flex";
     });
 })
 
@@ -197,12 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const nameInput = document.getElementById("newName-create");
     const createRoomDiv = document.getElementById("Create-room");
     const closeCreateRoomBtn = document.getElementById("close-createroom");
-    const playerImages = [
-        "../Source/green_tank.png",
-        "../Source/red_tank.png",
-        "../Source/blue_tank.png",
-        "../Source/yellow_tank.png"
-    ];
 
     function showError(message) {
         const existingError = document.querySelector(".error-popup");
@@ -227,27 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     createButton.addEventListener("click", (e) => {
         e.preventDefault();
-
         const nameValue = nameInput.value.trim();
-
-        console.log("Entered Name:", nameValue);
-
         if (nameValue === "") {
             showError("<b>Thất bại!</b><br>Tên không được để trống");
-        } else {
-            console.log("Da Nhap Ten");
-            document.getElementById("play").style.display = "none";
-            createRoomDiv.classList.remove("hidden");
-
-            const playerBox1 = document.getElementById("player-1");
-            playerBox1.innerText = nameValue;
-
-            // Ảnh tank của người chơi
-            const playerImage = playerImages[Math.floor(Math.random() * playerImages.length)];
-            playerBox1.innerHTML = `
-                <img src="${playerImage}" class="player-avatar" style="width: 180px; height: 100px;">
-                <div class="player-name">${nameValue}</div>
-            `;            
         }
     });
 
@@ -299,16 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (roomCode === "") {
             showError("<b>Thất bại!</b><br>Mã phòng không được để trống");
-        } else {
-            console.log("Room Code Entered Successfully");
-            const playerBox1 = document.getElementById("player-1");
-            playerBox1.innerText = nameValue;
-
-            // Ảnh tank của người chơi
-            const playerImage = playerImages[Math.floor(Math.random() * playerImages.length)];
-            const playerBoxImage = document.getElementById("player-box1");
-
-            playerBoxImage.innerHTML = `<img src="${playerImage}" class="player-avatar" style="width: 180px; height: 100px;">`;
+            return;
         }
     });
 });
@@ -319,12 +264,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const nameInput = document.getElementById("joinName");
     const joinRoomDiv = document.getElementById("Join-room");
     const closeJoinRoomBtn = document.getElementById("close-joinroom");
-    const playerImages = [
-        "../Source/green_tank.png",
-        "../Source/red_tank.png",
-        "../Source/blue_tank.png",
-        "../Source/yellow_tank.png"
-    ];
 
     autoJoinButton.classList.add("disabled");
 
@@ -356,19 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (nameValue === "") {
             showError("<b>Thất bại!</b><br>Tên không được để trống");
-        } else {
-            console.log("Valid name detected, proceeding to auto-join.");
-            document.getElementById("play").style.display = "none";
-            joinRoomDiv.classList.remove("hidden");
-
-            const playerBox1 = document.getElementById("player-11");
-            playerBox1.innerText = nameValue;
-
-            // Ảnh tank của người chơi
-            const playerImage = playerImages[Math.floor(Math.random() * playerImages.length)];
-            const playerBoxImage = document.getElementById("player-box11");
-
-            playerBoxImage.innerHTML = `<img src="${playerImage}" class="player-avatar" style="width: 180px; height: 100px;">`;
         }
     });
 
@@ -381,40 +307,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //Warning missing id or incorrect on JoinRoom 2
 document.addEventListener("DOMContentLoaded", () => {
-    const joinButton = document.querySelector("#btnJoinroom");
+    const joinButton = document.getElementById("btnJoinroom");
     const nameInput = document.getElementById("joinName");
     const roomIdInput = document.getElementById("joinId");
     const joinRoomDiv = document.getElementById("Join-room");
     const closeJoinRoomBtn = document.getElementById("close-joinroom");
-    const playerImages = [
-        "../Source/green_tank.png",
-        "../Source/red_tank.png",
-        "../Source/blue_tank.png",
-        "../Source/yellow_tank.png"
-    ];
-
-    joinButton.classList.add("disabled");
-
-    function showError(message) {
-        const existingError = document.querySelector(".error-popup");
-        if (existingError) existingError.remove();
-
-        const errorDiv = document.createElement("div");
-        errorDiv.classList.add("error-popup");
-        errorDiv.innerHTML = `
-            <div class="error-box">
-                <img src="../Source/warn.png" class="error-icon"></div>
-                <div class="error-text">${message}</div>
-            </div>
-        `;
-        document.body.appendChild(errorDiv);
-
-        setTimeout(() => errorDiv.style.opacity = "1", 100);
-        setTimeout(() => {
-            errorDiv.style.opacity = "0";
-            setTimeout(() => errorDiv.remove(), 500);
-        }, 3000);
-    }
 
     joinButton.addEventListener("click", (e) => {
         e.preventDefault();
@@ -424,19 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (nameValue === "" || roomIdValue === "") {
             showError("<b>Thất bại!</b><br>Tên và Mã phòng không được để trống");
-        } else {
-            console.log("Valid inputs detected, proceeding to room creation.");
-            document.getElementById("play").style.display = "none";
-            joinRoomDiv.classList.remove("hidden");
-
-            const playerBox1 = document.getElementById("player-11");
-            playerBox1.innerText = nameValue;
-
-            // Ảnh tank của người chơi
-            const playerImage = playerImages[Math.floor(Math.random() * playerImages.length)];
-            const playerBoxImage = document.getElementById("player-box11");
-
-            playerBoxImage.innerHTML = `<img src="${playerImage}" class="player-avatar" style="width: 180px; height: 100px;">`;
         }
     });
 
@@ -449,18 +333,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // KICK PLAYER LÀ 2 CÁI DƯỚI CÙNG NÀY
 
-// Xử lý kick người chơi
-document.querySelectorAll('.kick-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const playerBox = e.target.closest('.player-box');
-        if (playerBox) {
-            playerBox.querySelector('.player-content').innerHTML = 'Trống';
-            showNotification('Đuổi người dùng thành công!');
-        }
-    });
-});
-
 // Hiển thị notification (giữ nguyên)
 function showNotification(message) {
     const noti = document.createElement('div');
@@ -468,4 +340,25 @@ function showNotification(message) {
     noti.textContent = message;
     document.body.appendChild(noti);
     setTimeout(() => noti.remove(), 3000);
+}
+
+function showError(message) {
+    const existingError = document.querySelector(".error-popup");
+    if (existingError) existingError.remove();
+
+    const errorDiv = document.createElement("div");
+    errorDiv.classList.add("error-popup");
+    errorDiv.innerHTML = `
+        <div class="error-box">
+            <img src="../Source/warn.png" class="error-icon"></div>
+            <div class="error-text">${message}</div>
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+
+    setTimeout(() => errorDiv.style.opacity = "1", 100);
+    setTimeout(() => {
+        errorDiv.style.opacity = "0";
+        setTimeout(() => errorDiv.remove(), 500);
+    }, 3000);
 }

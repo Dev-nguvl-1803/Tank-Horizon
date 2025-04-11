@@ -325,7 +325,6 @@ class Scene extends Phaser.Scene {
             
             const mapTimeout = setTimeout(() => {
                 if (!mapReceived) {
-                    console.log('[SYNC] Map data timeout, requesting new map data');
                     socket.emit('resetMap');
                 }
             }, 3000);
@@ -523,7 +522,6 @@ class Scene extends Phaser.Scene {
                 const playerData = this.playersData.find(p => p.id === playerId);
                 if (playerData) {
                     playerData.score = score;
-                
                     try {
                         playerText.setText(`${playerData.name}: ${score}`);
                     } catch (error) {
@@ -1562,10 +1560,6 @@ function printBoard(board) { //in toàn bộ bảng
     }
     console.log(output);
 }
-
-window.addEventListener('error', function (e) {
-    console.error('JavaScript error:', e.message, 'at', e.filename, 'line', e.lineno);
-});
 
 window.renderBullet = function (bullet) {
     window.gameC.renderBullet(bullet);

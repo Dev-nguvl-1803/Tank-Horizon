@@ -1,14 +1,6 @@
-const socketAStatus = document.getElementById('socket-a-status');
-const socketBStatus = document.getElementById('socket-b-status');
-const eventLog = document.getElementById('eventLog');
-const hostControls = document.getElementById('host-controls');
+// const hostControls = document.getElementById('host-controls');
 const bulletCountElement = document.getElementById('bullet-count');
 const scoreElement = document.getElementById('score');
-const showAToB = document.getElementById('show-a-to-b');
-const showBToC = document.getElementById('show-b-to-c');
-const showAll = document.getElementById('show-all');
-
-let logFilter = 'all';
 
 let socket = io();
 let connected = false;
@@ -19,27 +11,42 @@ let gameInProgress = false;
 let bulletCount = 5;
 let score = 0;
 
-socket.on('connect', async() => {
+class SocketEventRegistry {
+    constructor(socket) {
+        this.socket = socket;
+        this.registeredEvents = new Map();
+    }
+
+    on(eventName, callback) {
+        if (this.registeredEvents.has(eventName)) {
+            this.socket.off(eventName, this.registeredEvents.get(eventName));
+        }
+
+        this.registeredEvents.set(eventName, callback);
+
+        this.socket.on(eventName, callback);
+    }
+
+    off(eventName) {
+        if (this.registeredEvents.has(eventName)) {
+            this.socket.off(eventName, this.registeredEvents.get(eventName));
+            this.registeredEvents.delete(eventName);
+        }
+    }
+}
+
+const socketRegistry = new SocketEventRegistry(socket);
+
+socket.on('connect', async () => {
     connected = true;
-    socketAStatus.textContent = 'Đã kết nối';
-    socketAStatus.style.color = 'green';
 });
 
 socket.on('disconnect', () => {
     connected = false;
-    socketAStatus.textContent = 'Đã ngắt kết nối';
-    socketAStatus.style.color = 'red';
-    socketBStatus.textContent = 'Đã ngắt kết nối';
-    socketBStatus.style.color = 'red';
-});
-
-socket.on('socketBConnected', () => {
-    socketBStatus.textContent = 'Đã kết nối';
-    socketBStatus.style.color = 'green';
 });
 
 function createNewGame() {
-    const nameInput = document.getElementById('newName');
+    const nameInput = document.getElementById('newName-create');
     const name = nameInput.value.trim();
 
     if (!name) {
@@ -58,21 +65,27 @@ function joinExistingGame() {
     const id = idInput.value.trim();
 
     if (!name || !id) {
-        alert('Vui lòng nhập cả tên và ID phòng!');
         return;
     }
 
     playerName = name;
     getRoom(id, true);
-    socket.on('sendRoom', (data) => {
-        console.log('SendRoom:', data);
+    socketRegistry.on('sendRoom', (data) => {
         if (data.gameInProgress) {
-            alert('Trò chơi đã bắt đầu, không thể tham gia!');
+            showError('Trò chơi đã bắt đầu, không thể tham gia!');
             return;
         } else {
             socket.emit('joinGame', { name: playerName, id });
         }
-    })
+    });
+}
+
+function autoJoin() {
+    const nameInput = document.getElementById('joinName');
+    const name = nameInput.value.trim();
+
+    if (!name) return;
+    socket.emit('autoJoin', { name: name });
 }
 
 function getRoom(id, isRoom) {
@@ -80,25 +93,43 @@ function getRoom(id, isRoom) {
 }
 
 function spectateGame() {
-    const idInput = document.getElementById('joinId');
+    const idInput = document.getElementById('joinId-Spectator');
     const id = idInput.value.trim();
 
     if (!id) {
-        alert('Vui lòng nhập ID phòng để xem!');
         return;
     }
 
     socket.emit('spectateGame', id);
-    socket.on('spectateWaitingRoom', data => {
-        console.log('Đang xem trận đấu:', data);
-    })
+    socketRegistry.on('spectateWaitingRoom', data => {
+        roomId = data.roomId;
+        gameInProgress = false;
+
+        document.getElementById('play').style.display = 'none';
+        document.getElementById('Join-room').classList.remove('hidden');
+
+        document.getElementById('you-r-player').innerText = `Bạn là người xem`;
+        Array.from(document.getElementsByClassName('roomId')).forEach(element => {
+            element.innerText = roomId;
+        });
+        for (let i = 0; i < data.players.length; i++) {
+            const player = data.players[i];
+            const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+            const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+            if (playerBox) {
+                playerBox.innerText = player.name;
+                playerAvatar.src = `../Source/${player.color}_tank.png`;
+            }
+        }
+    });
 }
 
 function startGame() {
     socket.emit('startGame');
-    socket.on('gameAlreadyStarted', (data) => {
-        alert(data);
-    })
+    socketRegistry.on('gameAlreadyStarted', (data) => {
+        showError(data);
+    });
 }
 
 function backToMenu() {
@@ -113,9 +144,9 @@ function backToMenu() {
     bulletCount = 5;
     score = 0;
 
-    document.getElementById('game').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
-    hostControls.style.display = 'none';
+    socketRegistry.off('sendRoom');
+    socketRegistry.off('spectateWaitingRoom');
+    socketRegistry.off('gameAlreadyStarted');
 }
 
 function sendPlayerLocation(x, y, rotation) {
@@ -132,15 +163,15 @@ function fireBullet(x, y, angle, powerup = null) {
         placeBomb(x, y);
         return;
     }
-    
+
     socket.emit('sendBullet', { x, y, angle, powerup });
 }
 
 function placeBomb(x, y) {
     if (!roomId || !gameInProgress) return;
-    
+
     const bombId = `bomb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    
+
     // Emit event to server to place a bomb
     socket.emit('placeBomb', {
         x: x,
@@ -148,14 +179,14 @@ function placeBomb(x, y) {
         bombId: bombId,
         ownerId: socket.id
     });
-    
+
     // Reset powerup after use
     currentPowerup = null;
 }
 
 function bombExploded(bombData) {
     if (!roomId || !gameInProgress) return;
-    
+
     socket.emit('bombExploded', bombData);
 }
 
@@ -177,108 +208,289 @@ function collectPowerup(powerup) {
     socket.emit('getPowerup', powerup);
 }
 
-function setupSocketCListeners() {
+function kickPlayer(id) {
+    const playerGetter = document.getElementById(`player-${id}`).innerText;
+    const roomId = document.querySelector('.roomId#owner').innerText;
 
-    socket.on('invalidRoomId', (roomId) => {
+    if (playerGetter && roomId) {
+        socket.emit('kickPlayer', { name: playerGetter, room: roomId });
+    } else {
+        showError("Không có player")
+    }
+}
+
+function setupSocketCListeners() {
+    socketRegistry.on('invalidRoomId', (roomId) => {
         alert(`ID phòng ${roomId} không tồn tại!`);
     });
 
-    socket.on('waitingRoom', (data) => {
+    socketRegistry.on('');
+    socketRegistry.on('playerKick', (data) => {
+        console.log('EOOEOEOOEOEO:', data);
+        if (data.message.includes("host")) {
+            showError(data.message);
+        } else if (data.message.includes("Bạn đã bị kick khỏi phòng")) {
+            console.log("Hả??")
+            roomId = null;
+            playerName = '';
+            isHost = false;
+            gameInProgress = false;
+            bulletCount = 5;
+            score = 0;
+
+            document.getElementById('Create-room').classList.add('hidden');
+            document.getElementById('Join-room').classList.add('hidden');
+            document.getElementById('phaser-game-container').style.display = 'none';
+            document.getElementById('play').style.display = 'block';
+        }
+    });
+
+    socketRegistry.on('waitingRoom', (data) => {
         roomId = data.roomId;
-        isHost = data.isHost;
+        isHost = false;
         gameInProgress = false;
 
-        document.getElementById('roomId').textContent = roomId;
-        document.getElementById('playerCount').textContent = data.players.length;
-
-
-        if (isHost) {
-            hostControls.style.display = 'block';
+        document.getElementById('play').style.display = 'none';
+        for (const element of document.getElementsByClassName('roomId')) {
+            element.textContent = data.roomId;
+        }
+        if (data.isHost) {
+            document.getElementById('Create-room').classList.remove('hidden');
         } else {
-            hostControls.style.display = 'none';
+            document.getElementById('Join-room').classList.remove('hidden');
         }
 
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
+        if (data.players.length > 0) {
+            if (data.isHost) {
+                for (let i = 0; i < 4; i++) {
+                    const playerBox = document.getElementById(`player-${i + 1}`);
+                    const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+                    const playBtn = document.getElementById('start-btn');
+                    if (playBtn) {
+                        playBtn.remove();
+                        document.querySelector('.start-text#owner').innerText = `Vui lòng chờ người chơi tham gia ...`;
+                    }
+                    if (playerBox && playerAvatar) {
+                        playerBox.innerText = '';
+                        playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+                    }
+                }
+                for (let i = 0; i < data.players.length; i++) {
+                    const player = data.players[i];
+                    const playerContainer = document.getElementsByClassName(`player-formal${i + 1}`);
+                    const playerBox = document.getElementById(`player-${i + 1}`);
+                    const playerBoxImage = document.getElementById(`player-box${i + 1}`);
+                    const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
 
+
+                    if (playerContainer) {
+                        if (playerBox) {
+                            playerBox.innerText = player.name;
+                        }
+                        if (playerBox && playerBoxImage) {
+                            playerAvatar.src = `../Source/${data.players[i].color}_tank.png`;
+                        }
+                    }
+                }
+            } else {
+                for (let i = 0; i < data.players.length; i++) {
+                    const player = data.players[i];
+                    const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
+                    const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+                    const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+                    if (playerContainer) {
+                        if (playerBox) {
+                            playerBox.innerText = player.name;
+                            playerAvatar.src = `../Source/${data.players[i].color}_tank.png`;
+                        }
+                    }
+                }
+            }
+        }
     });
 
-    socket.on('playerJoined', (data) => {
-        document.getElementById('playerCount').textContent = data.playerCount;
+    socketRegistry.on('playerJoined', (data) => {
+        const player = data.player;
+        isHost = data.player.isHost;
+
+        if (data.playerCount > 1) {
+            // thực hiện query đến class start-text -> id owner
+            const startText = document.querySelector(`.start-text#owner`);
+            if (startText) {
+                startText.innerText = "";
+                startText.innerHTML = `<button class="button" id="start-btn">Bắt đầu ngay ${data.playerCount}/4</button>`;
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    startGame();
+                });
+            }
+            // Player load
+            for (let i = 0; i <= 3; i++) {
+                const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
+                const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+                const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+                if (playerContainer) {
+                    if (playerBox) {
+                        if (playerAvatar.src !== "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==") {
+                            continue;
+                        } else {
+                            if (!data.player.isHost) {
+                                playerAvatar.src = `../Source/${data.player.color}_tank.png`;
+                                playerBox.innerText = player.name;
+                            }
+                        }
+                    }
+                    if (i + 1 == data.playerCount) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Admin load
+        for (let i = 0; i <= 3; i++) {
+            const playerBox = document.getElementById(`player-${i + 1}`);
+            const playerBoxImage = document.getElementById(`player-box${i + 1}`);
+            const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+
+            if (playerBox) {
+                if (playerBoxImage) {
+                    if (playerAvatar.src !== "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==") {
+                        continue;
+                    } else {
+                        if (!data.player.isHost) {
+                            playerAvatar.src = `../Source/${data.player.color}_tank.png`;
+                            playerBox.innerText = player.name;
+                        }
+                    }
+                }
+            }
+            if (i + 1 == data.playerCount) {
+                break;
+            }
+        }
     });
 
-    socket.on('spectateGameInProgress', (data) => {
+    socketRegistry.on('spectateGameInProgress', (data) => {
         roomId = data.roomId;
         gameInProgress = true;
 
-        document.getElementById('roomId').textContent = roomId;
-        document.getElementById('playerCount').textContent = data.players.length;
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
+        // Ẩn menu chọn phòng
+        document.getElementById('play').style.display = 'none';
 
-    });
-
-    socket.on('spectateWaitingRoom', (data) => {
-        roomId = data.roomId;
-        gameInProgress = false;
+        // Hiển thị Phaser game
+        document.getElementById('phaser-game-container').style.display = 'block';
 
         document.getElementById('roomId').textContent = roomId;
-        document.getElementById('playerCount').textContent = data.players.length;
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
-
     });
 
-    socket.on('sendRoom', (data) => {
+    socketRegistry.on('sendRoom', (data) => {
         roomId = data.roomId;
         gameInProgress = data.gameInProgress;
 
-        document.getElementById('roomId').textContent = roomId;
-        document.getElementById('playerCount').textContent = data.playerCount;
-
-    });
-
-    socket.on('notAuthorized', (message) => {
-        alert(message);
-    });
-
-    socket.on('notEnoughPlayers', (message) => {
-        alert(message);
-    });
-
-
-
-    socket.on('newHost', (data) => {
-        if (data.id === socket.id) {
-            isHost = true;
-            hostControls.style.display = 'block';
-        } else {
+        for (const element of document.getElementsByClassName('roomId')) {
+            element.textContent = roomId;
         }
     });
 
-
-    socket.on('playerLeft', (data) => {
-        document.getElementById('playerCount').textContent = data.playerCount;
+    socketRegistry.on('notAuthorized', (message) => {
+        alert(message);
     });
 
-    socket.on('renderMovement', (player) => {
+    socketRegistry.on('notEnoughPlayers', (message) => {
+        alert(message);
+    });
+
+    socketRegistry.on('newHost', (data) => {
+        if (data.id === socket.id) {
+            document.getElementById('Join-room').classList.add('hidden');
+            document.getElementById('Create-room').classList.remove('hidden');
+            isHost = true;
+            //Admin load
+            for (let i = 0; i < data.players.length; i++) {
+                const player = data.players[i];
+                const playerBox = document.getElementById(`player-${i + 1}`);
+                const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+                if (playerBox) {
+                    playerBox.innerText = player.name;
+                    playerAvatar.src = `../Source/${player.color}_tank.png`;
+                }
+            }
+
+            //Player load
+            for (let i = 0; i < data.players.length; i++) {
+                console.log("[Admin load] Player:", data.players[i]);
+                const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
+                const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+                const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+                if (playerContainer) {
+                    if (playerBox) {
+                        playerAvatar.src = `../Source/${data.players[i].color}_tank.png`;
+                        playerBox.innerText = data.players[i].name;
+                    }
+                }
+            }
+        }
+    });
+
+    socketRegistry.on('playerLeft', (data) => {
+        // Player load
+        for (let i = 0; i <= 3; i++) {
+            console.log('[Player load] Player');
+            const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
+            const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+            const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+            if (playerContainer) {
+                if (playerBox.innerText == data.name) {
+                    playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+                    playerBox.innerText = '';
+                }
+            }
+        }
+
+        // Admin load
+        for (let i = 0; i <= 3; i++) {
+            const playerBox = document.getElementById(`player-${i + 1}`);
+            const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+            const startBtn = document.getElementById('start-btn');
+
+            if (playerBox) {
+                if (playerBox.innerText == data.name) {
+                    playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                    playerBox.innerText = '';
+                }
+            }
+            if (data.playerCount > 1) {
+                startBtn.innerText = `Bắt đầu ngay ${data.playerCount}/4`;
+            } else {
+                startBtn.remove();
+                const startText = document.querySelector(`.start-text#owner`);
+                startText.innerText = `Vui lòng chờ người chơi tham gia ...`;
+            }
+        }
+    });
+
+    socketRegistry.on('renderMovement', (player) => {
         if (window.updatePlayerPosition) {
             window.updatePlayerPosition(player);
         }
     });
 
-    socket.on('renderBullet', (bullet) => {
+    socketRegistry.on('renderBullet', (bullet) => {
         if (window.renderBullet) {
             window.renderBullet(bullet);
         }
     });
 
-    socket.on('bulletCountUpdated', (data) => {
+    socketRegistry.on('bulletCountUpdated', (data) => {
         bulletCount = data.count;
         bulletCountElement.textContent = bulletCount;
     });
 
-    socket.on('scoreUpdated', (data) => {
+    socketRegistry.on('scoreUpdated', (data) => {
         if (data.id === socket.id) {
             score = data.score;
             scoreElement.textContent = score;
@@ -289,7 +501,7 @@ function setupSocketCListeners() {
         }
     });
 
-    socket.on('gameOver', (data) => {
+    socketRegistry.on('gameOver', (data) => {
         gameInProgress = false;
 
         alert(`Trò chơi kết thúc! ${data.winner.name} đã chiến thắng với điểm số ${data.winner.score}`);
@@ -299,97 +511,83 @@ function setupSocketCListeners() {
         }
     });
 
-    socket.on('spectateMode', (data) => {
-
-
+    socketRegistry.on('spectateMode', (data) => {
         if (window.enterSpectateMode) {
             window.enterSpectateMode(data.players);
         }
     });
 
-    socket.on('removePlayer', (playerId) => {
-
-
+    socketRegistry.on('removePlayer', (playerId) => {
         if (window.removePlayer) {
             window.removePlayer(playerId);
         }
     });
 
-    socket.on('hasPowerup', (data) => {
-
-
+    socketRegistry.on('hasPowerup', (data) => {
         if (window.updatePowerup) {
             window.updatePowerup(data.id, data.powerup);
         }
     });
 
-    socket.on('newPowerup', (powerup) => {
+    socketRegistry.on('newPowerup', (powerup) => {
         console.log('Nhận được powerup mới từ server:', powerup);
-        
+
         if (window.handleNewPowerup) {
             window.handleNewPowerup(powerup);
         }
     });
+
+    // Thêm xử lý sự kiện khi game bắt đầu
+    socketRegistry.on('gameStart', (data) => {
+        gameInProgress = true;
+        console.log('Game started! Displaying Phaser game.');
+
+        // Ẩn phòng chờ
+        document.getElementById('Create-room').classList.add('hidden');
+        document.getElementById('Join-room').classList.add('hidden');
+
+        // Hiển thị container Phaser game
+        document.getElementById('phaser-game-container').style.display = 'block';
+    });
 }
 
-function logSocketEvent(direction, event, data) {
-    const timestamp = new Date().toLocaleTimeString();
-    const logMessage = `[${timestamp}] ${direction}: ${event} ${JSON.stringify(data, null, 2)}`;
-
-
-    if (
-        logFilter === 'all' ||
-        (logFilter === 'a-to-b' && direction === 'Socket A → B') ||
-        (logFilter === 'b-to-c' && direction === 'Socket B → C') ||
-        direction === 'info'
-    ) {
-
-        eventLog.innerHTML = logMessage + '\n' + eventLog.innerHTML;
-    }
-
-
-    console.log(logMessage);
-}
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    document.getElementById('newGame').addEventListener('click', createNewGame);
-    document.getElementById('joinGame').addEventListener('click', joinExistingGame);
-    document.getElementById('getRoom').addEventListener('click', getRoom);
-    document.getElementById('spectateGame').addEventListener('click', spectateGame);
-    document.getElementById('start-game').addEventListener('click', startGame);
-    document.getElementById('back-to-menu').addEventListener('click', backToMenu);
-
-
-    showAToB.addEventListener('click', () => {
-        logFilter = 'a-to-b';
-        eventLog.innerHTML = '';
-        showAToB.style.fontWeight = 'bold';
-        showBToC.style.fontWeight = 'normal';
-        showAll.style.fontWeight = 'normal';
+    document.getElementById('newGame').addEventListener('click', () => {
+        createNewGame();
     });
-
-    showBToC.addEventListener('click', () => {
-        logFilter = 'b-to-c';
-        eventLog.innerHTML = '';
-        showAToB.style.fontWeight = 'normal';
-        showBToC.style.fontWeight = 'bold';
-        showAll.style.fontWeight = 'normal';
+    document.getElementById('btnJoinroom').addEventListener('click', () => {
+        joinExistingGame();
     });
-
-    showAll.addEventListener('click', () => {
-        logFilter = 'all';
-        eventLog.innerHTML = '';
-        showAToB.style.fontWeight = 'normal';
-        showBToC.style.fontWeight = 'normal';
-        showAll.style.fontWeight = 'bold';
+    document.getElementById('spectateGame').addEventListener('click', () => {
+        spectateGame();
     });
-
+    document.getElementById('close-createroom').addEventListener('click', () => {
+        backToMenu();
+    });
+    document.getElementById('close-joinroom').addEventListener('click', () => {
+        backToMenu();
+    });
+    document.getElementById('joinGame').addEventListener('click', () => {
+        autoJoin();
+    });
+    document.getElementById('player-box1').addEventListener('click', () => {
+        kickPlayer(1)
+    });
+    document.getElementById('player-box2').addEventListener('click', () => {
+        kickPlayer(2);
+    });
+    document.getElementById('player-box3').addEventListener('click', () => {
+        kickPlayer(3);
+    });
+    document.getElementById('player-box4').addEventListener('click', () => {
+        kickPlayer(4);
+    });
 
     setupSocketCListeners();
 });
 
-socket.on('newBoard', (board) => {
+socketRegistry.on('newBoard', (board) => {
     console.log('Received new board:', board);
     if (window.createBoard) {
         window.createBoard(window.gameScene, board);

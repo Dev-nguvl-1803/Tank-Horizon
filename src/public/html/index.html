@@ -61,7 +61,7 @@
         <div id="Credit">
             <img src="../Source/finally.png" id="close-credit" class="close-btn" alt="Close">
             <div class="center-container">
-                <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon" id="SKIBIDI2">
+                <img src="../Source/tank.png" class="tank-horizon" alt="Tank Horizon">
                 <div class="outer-container">
                     <p class="credit-text"><b>Credit thuộc về Dev-ngu-vl studio</b></p>
                     <div class="inner-container">
@@ -99,13 +99,14 @@
                         </div>
                     </div>
                     <div class="social-icons">
-                        <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="../Source/discord.png" alt="Discord"></a>
-                        <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img src="../Source/reddit.png"
-                                alt="Reddit"></a>
+                        <a href="https://discord.gg/7mKE8KFe7M" target="_blank"><img src="../Source/discord.png"
+                                alt="Discord"></a>
+                        <a href="https://www.reddit.com/r/Tank_Horizon/hot/" target="_blank"><img
+                                src="../Source/reddit.png" alt="Reddit"></a>
                         <a href="https://tank-horizon.fandom.com/vi/wiki/Trang_Ch%C3%ADnh" target="_blank"><img
                                 src="../Source/fandom.png" alt="Fandom"></a>
-                        <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img src="../Source/github.png"
-                                alt="GitHub"></a>
+                        <a href="https://github.com/Dev-nguvl-1803/Tank-Horizon" target="_blank"><img
+                                src="../Source/github.png" alt="GitHub"></a>
                     </div>
                 </div>
             </div>
@@ -120,23 +121,38 @@
             <div class="player-container">
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box1">×</div>
-                    <div class="player-number" id="player-1"></div>
+                    <div class="player-formal1">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar1" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-1"></div>
+                    </div>
                 </div>
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box2">×</div>
+                    <div class="player-formal2">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar2" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-2"></div>
+                    </div>
                     <div class="player-number" id="player-2"></div>
                 </div>
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box3">×</div>
+                    <div class="player-formal3">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar3" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-3"></div>
+                    </div>
                     <div class="player-number" id="player-3"></div>
                 </div>
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box4">×</div>
+                    <div class="player-formal4">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar4" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-4"></div>
+                    </div>
                     <div class="player-number" id="player-4"></div>
                 </div>
             </div>
-            <div class="start-text">Vui lòng chờ người chơi tham gia ...</div>
-            <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
+            <div class="start-text" id="owner">Vui lòng chờ người chơi tham gia ...</div>
+            <div class="room-code">Mã phòng: <span class="roomId" id="owner"></span></div>
         </div>
     </div>
 
@@ -144,30 +160,43 @@
         <img src="../Source/finally.png" id="close-joinroom" class="close-create" alt="Close">
         <div class="container-room">
             <div class="title">Phòng chờ bắt đầu</div>
-            <div class="owner">Bạn là người chơi</div>
+            <div class="owner" id="you-r-player">Bạn là người chơi</div>
             <div class="player-container">
-                <div>
-                    <div class="player-box" id="player-box11"></div>
-                    <div class="player-number" id="player-11"></div>
+                <div class="player-box">
+                    <div class="player-formal11">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar11" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-11"></div>
+                    </div>
                 </div>
-                <div>
-                    <div class="player-box" id="player-box22"></div>
+                <div class="player-box">
+                    <div class="player-formal22">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar22" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-22"></div>
+                    </div>
                     <div class="player-number" id="player-22"></div>
                 </div>
-                <div>
-                    <div class="player-box" id="player-box33"></div>
+                <div class="player-box">
+                    <div class="player-formal33">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar33" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-33"></div>
+                    </div>
                     <div class="player-number" id="player-33"></div>
                 </div>
-                <div>
-                    <div class="player-box" id="player-box44"></div>
+                <div class="player-box">
+                    <div class="player-formal44">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar44" style="width: 130px; height: 150px;">
+                        <div class="player-number" id="player-44"></div>
+                    </div>
                     <div class="player-number" id="player-44"></div>
                 </div>
+                <!-- Player 1 -->
             </div>
-            <div class="room-code">Mã phòng: &lt;ROOM&gt;</div>
+            <div class="start-text" id="player">Vui lòng chờ chủ phòng bắt đầu ...</div>
+            <div class="room-code">Mã phòng: <span class="roomId"></span></div>
         </div>
     </div>
 
-    <audio id="background-music" loop>
+    <audio id="background-music" loop autoplay>
         <source src="../Source/TD.mp3" type="audio/mpeg">
         Your browser does not support the audio tag.
     </audio>
@@ -180,7 +209,7 @@
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
             <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required>
-            <button>Tạo phòng</button>
+            <button id="newGame">Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
             <h2>Tham gia phòng chơi</h2>
@@ -200,8 +229,14 @@
             <h2>Chế độ khán giả</h2>
             <div id="KhanGia">Mã phòng:</div>
             <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required>
-            <button>Xem ngay</button>
+            <button id="spectateGame">Xem ngay</button>
         </div>
+    </div>
+
+    <!-- Phaser Game Container - Hidden by default -->
+    <div id="phaser-game-container" style="display: none;">
+        <div id="phaser-game"></div>
+        <button id="back-to-menu" class="button">Trở về</button>
     </div>
 
     <script src="../js/script.js"></script>

@@ -40,7 +40,17 @@ app.use('/js', express.static(path.join(publicPath, 'js'), {
   }
 }));
 
+app.use('/', express.static(path.join(publicPath, 'html'), {
+  setHeaders: (res, filePath) => {
+    if (path.extname(filePath) === '.css') {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
+
 app.use('/assets', express.static(path.join(publicPath, 'assets')));
+
+app.use('/Source', express.static(path.join(publicPath, 'Source')));
 
 const playerDbs = new Map();
 
@@ -138,10 +148,89 @@ const getRoom = (id: string, isRoomId: boolean): string | undefined => {
 
 
 io.on('connection', (socket) => {
-
-  socket.emit('socketBConnected');
-
   // ROOM SOCKET EVENTS ===========================================================
+
+  const autoJoin = (data: { name: string; }) => {
+    // Ngẫu nhiên chọn room từ rooms kiểm tra điều kiện sau:
+    // gameInProgress = false (chưa bắt đầu)
+    // players.length < globalSettings.maxPlayers (chưa đủ người chơi)
+    // chỉ có vậy thôi
+
+    const player = Object.values(rooms).flatMap(room => room.players).find(player => player.name === data.name);
+    if (player) {
+      return;
+    }
+    const availableRooms = Object.values(rooms).filter(room => !room.gameInProgress && room.players.length < globalSettings.maxPlayers);
+    if (availableRooms.length === 0) {
+      socket.emit('noAvailableRoom', 'Không có phòng nào khả dụng, vui lòng tạo phòng mới');
+      return;
+    }
+    const randomRoom = availableRooms[Math.floor(Math.random() * availableRooms.length)];
+    const roomId = randomRoom.id;
+
+    randomRoom.newPlayer(socket.id, data.name);
+    const playerIndex = randomRoom.getPlayerIndex(socket.id);
+    
+    socket.join(roomId);
+    socket.to(roomId).emit('playerJoined', {
+      player: rooms[roomId].players[playerIndex],
+      playerCount: rooms[roomId].players.length
+    });
+
+    socket.emit('waitingRoom', {
+      roomId: roomId,
+      players: rooms[roomId].players,
+      isHost: false,
+      maxPlayers: globalSettings.maxPlayers
+    });
+    socket.off('autoJoin', autoJoin);
+  }
+
+  const kickPlayer = async (data: any) => {
+    const player = Object.values(rooms).flatMap(room => room.players).find(player => player.name === data.name);
+    if (player) {
+      const client = io.sockets.sockets.get(player.id);
+      if (client) {
+        if (!player.isHost) {
+          client.emit('playerKick', {
+            message: `Bạn đã bị kick khỏi phòng ${player.roomId}`,
+            room: rooms[player.roomId].id
+          });
+          await client.leave(player.roomId);
+
+          const playerIndex = rooms[player.roomId].getPlayerIndex(player.id);
+          if (playerIndex !== -1) {
+            // Xóa người chơi khỏi player data
+            rooms[player.roomId].players.splice(playerIndex, 1);
+
+            // Phòng rỗng = xóa phòng
+            if (rooms[player.roomId].players.length === 0) {
+              delete rooms[player.roomId];
+              const idIndex = roomIds.indexOf(player.roomId);
+              if (idIndex !== -1) {
+                roomIds.splice(idIndex, 1);
+              }
+            }
+          }
+
+          io.to(rooms[player.roomId].id).emit('playerLeft', {
+            id: player.id,
+            name: player.name,
+            playerCount: rooms[player.roomId].players.length,
+            room: rooms[player.roomId].id
+          });
+        } else {
+          client.emit('playerKick', {
+            message: `Không thể kick host`,
+            room: rooms[player.roomId].id
+          });
+          return;
+        }
+      }
+    }
+    socket.off('kickPlayer', kickPlayer);
+  }
+
   const socketNewGame = (data: any) => {
     /**
      * Goal:
@@ -206,7 +295,7 @@ io.on('connection', (socket) => {
       isHost: false,
       maxPlayers: globalSettings.maxPlayers
     });
-    
+
     socket.off('joinGame', socketJoinGame);
   }
 
@@ -226,14 +315,12 @@ io.on('connection', (socket) => {
     socket.join(roomId);
 
     if (rooms[roomId].gameInProgress) {
-      console.log(`Spectating game in progress: ${roomId}`);
       socket.emit('spectateGameInProgress', {
         roomId: roomId,
         board: rooms[roomId].map,
         players: rooms[roomId].players
       });
     } else {
-      console.log(`Spectating game in waiting: ${roomId}`);
       socket.emit('spectateWaitingRoom', {
         roomId,
         players: rooms[roomId].players,
@@ -293,14 +380,14 @@ io.on('connection', (socket) => {
     }
 
     rooms[roomId].gameInProgress = true;
-    
+
     io.to(roomId).emit('drawBoard', rooms[roomId].map);
 
     io.to(roomId).emit('gameStart', {
       board: rooms[roomId].map,
       players: rooms[roomId].players
     });
-    
+
     console.log(`[Room ${roomId}] Bắt đầu spawner powerup sau khi trò chơi đã bắt đầu`);
     rooms[roomId].powerupSpawner();
 
@@ -325,10 +412,12 @@ io.on('connection', (socket) => {
 
     }
 
+    console.log("Đã leave room", player.name, player.id, rooms[roomId].id)
     socket.to(roomId).emit('playerLeft', {
       id: socket.id,
       name: player.name,
-      playerCount: rooms[roomId].players.length - 1
+      playerCount: rooms[roomId].players.length - 1,
+      room: rooms[roomId].id
     });
 
     socket.leave(roomId);
@@ -340,7 +429,8 @@ io.on('connection', (socket) => {
 
       io.to(roomId).emit('newHost', {
         id: rooms[roomId].players[newHostIndex].id,
-        name: rooms[roomId].players[newHostIndex].name
+        name: rooms[roomId].players[newHostIndex].name,
+        players: rooms[roomId].players
       });
     }
 
@@ -372,7 +462,6 @@ io.on('connection', (socket) => {
 
     const player = rooms[roomId].players[playerIndex];
 
-
     if (rooms[roomId].gameInProgress && player.score > 0) {
 
     }
@@ -394,7 +483,8 @@ io.on('connection', (socket) => {
 
       io.to(roomId).emit('newHost', {
         id: rooms[roomId].players[newHostIndex].id,
-        name: rooms[roomId].players[newHostIndex].name
+        name: rooms[roomId].players[newHostIndex].name,
+        players: rooms[roomId].players
       });
     }
 
@@ -502,8 +592,8 @@ io.on('connection', (socket) => {
 
     const datas = playerDbs.get(roomId + rooms[roomId].round);
     const clearDatas = playerDbs.get(roomId + (rooms[roomId].round - 1));
-    if(clearDatas) playerDbs.delete(roomId + (rooms[roomId].round - 1));
-    
+    if (clearDatas) playerDbs.delete(roomId + (rooms[roomId].round - 1));
+
     if (datas) {
       const killed = datas.find((i: any) => i == data.victimId);
       if (killed) return;
@@ -596,6 +686,9 @@ io.on('connection', (socket) => {
     socket.off('getPowerup', socketGetPowerup);
   }
 
+  socket.on('autoJoin', (data) => {
+    autoJoin(data);
+  })
   socket.on('newGame', async (data) => {
     socketNewGame(data);
   });
@@ -635,6 +728,7 @@ io.on('connection', (socket) => {
   socket.on('getPowerup', (powerup) => {
     socketGetPowerup(powerup);
   });
+  socket.on('kickPlayer', async (name) => await kickPlayer(name));
   socket.on('placeBomb', (data) => {
     /**
      * Goal:
@@ -647,9 +741,9 @@ io.on('connection', (socket) => {
 
     const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
     if (playerIndex === -1) return;
-    
+
     rooms[roomId].players[playerIndex].powerup = null;
-    
+
     io.to(roomId).emit('bombPlaced', {
       bombId: data.bombId,
       x: data.x,
@@ -685,7 +779,7 @@ io.on('connection', (socket) => {
       x: data.x,
       y: data.y,
       ownerId: data.ownerId,
-    
+
     });
 
     setTimeout(() => {
