@@ -33,15 +33,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const creditWindow = document.getElementById('Credit-window');
     const closeCredit = document.getElementById('close-credit');
     const leaderboard = document.querySelectorAll('.container');
+    const menu = document.getElementById('menu');
 
     creditBtn.addEventListener('click', () => {
         creditWindow.classList.remove('hidden');
+
+        anime({
+            targets: '#Credit-window',
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            translateY: [40, 0],
+            duration: 600,
+            easing: 'easeOutExpo',
+        });
+
         leaderboard.forEach(logo => {
             logo.style.visibility = 'hidden';
         });
     });
 
     closeCredit.addEventListener('click', () => {
+        menu.classList.remove('hidden');
+
         anime({
             targets: '#Credit-window',
             opacity: [1, 0],
@@ -199,7 +212,6 @@ document.addEventListener("DOMContentLoaded", function () {
             duration: 600,
             easing: 'easeOutExpo',
         });
-
     });
 
     closePlay.addEventListener("click", function () {
@@ -217,12 +229,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         anime({
-            targets: '#menu',
-            opacity: [0, 1],
-            scale: [40, 1],
+            targets: '#menu', //doi tuong m muon animate
+            opacity: [0, 1], //invisible -> visible
+            scale: [40, 1], //tu to sang nho
             translateY: [40, 0], //chieu trai
-            duration: 3000,
-            easing: 'easeOutExpo',
+            duration: 3000, //thoi gian
+            easing: 'easeOutExpo', //nhanh sang cham
         });
     });
 })

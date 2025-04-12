@@ -122,7 +122,7 @@ body {
   color: #8E8984;
   /*set text yea*/
   position: absolute;
-  top: 50%;
+  top: 66%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: #DBD6CF;
@@ -141,8 +141,8 @@ body {
 
 .close-btn {
   position: absolute;
-  top: 23px;
-  left: 25px;
+  top: 10%;
+  left: 2.4%;
   height: 46px;
   cursor: pointer;
 }
