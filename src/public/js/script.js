@@ -494,3 +494,39 @@ function showNotification(message) {
     document.body.appendChild(noti);
     setTimeout(() => noti.remove(), 3000);
 }
+
+//Mo phong lich su tran dau
+const historyContent = document.querySelector('.history-content');
+const historyWindow = document.getElementById('History-window'); 
+const gameHistory = [
+    { device: "Laptop", user: "Tai", kd: "5/2", round: 3, result: "Win", date: "2025-04-09" },
+    { device: "Sug", user: "alterGolden", kd: "2/4", round: 2, result: "Lose", date: "2025-04-08" },
+    { device: "Laptop", user: "my cock", kd: "6/1", round: 5, result: "Win", date: "2025-04-07" },
+    { device: "PC", user: "sug", kd: "7/3", round: 4, result: "Win", date: "2025-04-06" },
+    { device: "???", user: "???", kd: "1/5", round: 1, result: "Lose", date: "2025-04-05" },
+    { device: "Undefined", user: "Freaky", kd: "3/3", round: 2, result: "Draw", date: "2025-04-04" },
+    { device: "Null", user: "Null", kd: "4/0", round: 5, result: "Win", date: "2025-04-03" },
+    { device: "Laptop", user: "Diddy", kd: "0/6", round: 3, result: "Lose", date: "2025-04-02" },
+    { device: "PC", user: "I won 50/50", kd: "5/5", round: 4, result: "Draw", date: "2025-04-01" },
+    { device: "Laptop", user: "Mika Glazer", kd: "8/2", round: 6, result: "Win", date: "2025-03-31" },
+    { device: "Laptop", user: "Mika Glazer 2", kd: "8/2", round: 6, result: "Win", date: "2025-03-31" }
+];  
+function renderHistory() {
+    historyContent.innerHTML = "";
+    for (let i = 0; i < gameHistory.length; i++) {
+      const item = gameHistory[i];
+      const row = document.createElement('div');
+      row.classList.add('history-row');
+      row.innerHTML = `
+        <div>${item.device}</div>
+        <div>${item.user}</div>
+        <div>${item.kd}</div>
+        <div>${item.round}</div>
+        <div>${item.result}</div>
+        <div>${item.date}</div>
+      `;
+      historyContent.appendChild(row);
+    }
+  }  
+renderHistory();
+historyWindow.classList.remove('hidden');

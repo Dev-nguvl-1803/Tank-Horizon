@@ -731,6 +731,22 @@ input[type=text], select {
   font-size: 1.2vw;
 }
 
+.history-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+  font-weight: 500;
+}
+
+.history-row div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*Tao phong*/
 #windowTaoPhong input {
   font-family: Arial, Helvetica, sans-serif; /*font chu*/
   font-weight: bold;
