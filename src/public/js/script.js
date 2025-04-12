@@ -159,15 +159,72 @@ document.addEventListener("DOMContentLoaded", function () {
     const closePlay = document.getElementById('close-play');
 
     playButton.addEventListener("click", function () {
-        playMenu.style.display = "none"; // Hide menu
-        play.style.display = "block"; // Show game-container only
+        anime({
+            targets: playMenu,
+            opacity: [1, 0],
+            easing: 'easeInOutQuad',
+            complete: function () {
+                playMenu.style.display = "none";
+                play.style.display = "block";
+
+                // Animation dạng mảnh ghép
+                anime.timeline({
+                    easing: 'easeOutExpo',
+                    duration: 600
+                })
+                    .add({
+                        targets: '#HelloWorld',
+                        opacity: [0, 1],
+                        translateY: [40, 0],
+                    })
+                    .add({
+                        targets: '#Description',
+                        opacity: [0, 1],
+                        translateY: [40, 0],
+                    })
+                    .add({
+                        targets: '#windowTaoPhong',
+                        opacity: [0, 1],
+                        translateY: [40, 0],
+                    })
+                    .add({
+                        targets: '#windowThamGiaPhong',
+                        opacity: [0, 1],
+                        translateY: [40, 0],
+                    })
+                    .add({
+                        targets: '#windowKhanGia',
+                        opacity: [0, 1],
+                        translateY: [40, 0],
+                    })
+                    .add({
+                        targets: '#close-play',
+                        opacity: [0, 1],
+                        scale: [0.8, 1],
+                    });
+            }
+        });
     });
 
     closePlay.addEventListener("click", function () {
-        play.style.display = "none";
-        playMenu.style.display = "flex";
+        anime({
+            targets: play,
+            opacity: [1, 0],
+            duration: 400,
+            easing: 'easeInOutQuad',
+            complete: function () {
+                play.style.display = "none";
+                playMenu.style.display = "flex";
+                anime({
+                    targets: playMenu,
+                    opacity: [0, 1],
+                    duration: 400,
+                    easing: 'easeOutQuad'
+                });
+            }
+        });
     });
-})
+});
 
 //Warning for not inputting name
 document.addEventListener("DOMContentLoaded", () => {
