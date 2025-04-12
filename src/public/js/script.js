@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+//Credit 
 document.addEventListener('DOMContentLoaded', () => {
     const creditBtn = document.getElementById('btnCredit');
     const creditWindow = document.getElementById('Credit-window');
@@ -41,9 +42,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     closeCredit.addEventListener('click', () => {
-        creditWindow.classList.add('hidden');
-        leaderboard.forEach(logo => {
-            logo.style.visibility = 'visible';
+        anime({
+            targets: '#Credit-window',
+            opacity: [1, 0],
+            scale: [1, 0.95],
+            translateY: [0, 40], //chieu phai
+            duration: 600,
+            easing: 'easeInExpo',
+            complete: function () {
+                creditWindow.classList.add('hidden');
+                leaderboard.forEach(logo => {
+                    logo.style.visibility = 'visible';
+                });
+            }
+        });
+
+        anime({
+            targets: '#menu',
+            opacity: [0, 1],
+            scale: [40, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 3000,
+            easing: 'easeOutExpo',
         });
     });
 });
@@ -159,13 +179,51 @@ document.addEventListener("DOMContentLoaded", function () {
     const closePlay = document.getElementById('close-play');
 
     playButton.addEventListener("click", function () {
-        playMenu.style.display = "none"; // Hide menu
-        play.style.display = "block"; // Show game-container only
+        play.style.display = "block";
+        playMenu.style.display = "none";
+
+        anime({
+            targets: '#menu',
+            opacity: [1, 0],
+            scale: [1, 40],
+            translateY: [40, 0], //chieu trai
+            duration: 3000,
+            easing: 'easeOutExpo',
+        });
+
+        anime({
+            targets: '#play',
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 600,
+            easing: 'easeOutExpo',
+        });
+
     });
 
     closePlay.addEventListener("click", function () {
-        play.style.display = "none";
-        playMenu.style.display = "flex";
+        anime({
+            targets: '#play',
+            opacity: [1, 0],
+            scale: [1, 0.95],
+            translateY: [0, 40], //chieu phai
+            duration: 600,
+            easing: 'easeInExpo',
+            complete: function () {
+                play.style.display = "none";
+                playMenu.style.display = "flex";
+            }
+        });
+
+        anime({
+            targets: '#menu',
+            opacity: [0, 1],
+            scale: [40, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 3000,
+            easing: 'easeOutExpo',
+        });
     });
 })
 
@@ -362,3 +420,6 @@ function showError(message) {
         setTimeout(() => errorDiv.remove(), 500);
     }, 3000);
 }
+
+
+  
