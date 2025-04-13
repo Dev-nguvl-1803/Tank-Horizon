@@ -196,15 +196,6 @@ document.addEventListener("DOMContentLoaded", function () {
         playMenu.style.display = "none";
 
         anime({
-            targets: '#menu',
-            opacity: [1, 0],
-            scale: [1, 40],
-            translateY: [40, 0], //chieu trai
-            duration: 3000,
-            easing: 'easeOutExpo',
-        });
-
-        anime({
             targets: '#play',
             opacity: [0, 1],
             scale: [0.95, 1],
@@ -268,6 +259,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     createButton.addEventListener("click", (e) => {
+
+        anime({
+            targets: '#Create-room',
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 600,
+            easing: 'easeOutExpo',
+        });
+
         e.preventDefault();
         const nameValue = nameInput.value.trim();
         if (nameValue === "") {
@@ -276,6 +277,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     closeCreateRoomBtn.addEventListener("click", () => {
+
+        anime({
+            targets: '#play',
+            opacity: [0, 1],
+            translateY: [100, 0],
+            scale: [0.8, 1],
+            duration: 750,
+            easing: 'easeOutCubic',
+        });
+
         console.log("Close button clicked.");
         createRoomDiv.classList.add("hidden");
         document.getElementById("play").style.display = "block";
@@ -359,6 +370,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     autoJoinButton.addEventListener("click", (e) => {
+
+        anime({
+            targets: '#Join-room',
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 600,
+            easing: 'easeOutExpo',
+        });
+
         e.preventDefault();
 
         const nameValue = nameInput.value.trim();
@@ -369,6 +390,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     closeJoinRoomBtn.addEventListener("click", () => {
+
+        anime({
+            targets: '#play',
+            opacity: [0, 1],
+            translateY: [100, 0],
+            scale: [0.8, 1],
+            duration: 750,
+            easing: 'easeOutCubic',
+        });
+
         console.log("Close button clicked.");
         joinRoomDiv.classList.add("hidden");
         document.getElementById("play").style.display = "block";
@@ -384,6 +415,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeJoinRoomBtn = document.getElementById("close-joinroom");
 
     joinButton.addEventListener("click", (e) => {
+
+        anime({
+            targets: '#Join-room',
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            translateY: [40, 0], //chieu trai
+            duration: 600,
+            easing: 'easeOutExpo',
+        });
+
         e.preventDefault();
 
         const nameValue = nameInput.value.trim();
@@ -395,6 +436,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     closeJoinRoomBtn.addEventListener("click", () => {
+
+        anime({
+            targets: '#play',
+            opacity: [0, 1],
+            translateY: [100, 0],
+            scale: [0.8, 1],
+            duration: 750,
+            easing: 'easeOutCubic',
+        });
+        
         console.log("Close button clicked.");
         joinRoomDiv.classList.add("hidden");
         document.getElementById("play").style.display = "block";

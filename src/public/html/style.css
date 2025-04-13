@@ -122,7 +122,7 @@ body {
   color: #8E8984;
   /*set text yea*/
   position: absolute;
-  top: 66%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: #DBD6CF;
