@@ -1,16 +1,16 @@
 # Tank Horizon API Documentation
 
-This document provides details on how to interact with the Tank Horizon API endpoints for managing Players, Matches, and Match Results.
+Tài liệu này cung cấp thông tin chi tiết về cách tương tác với các API endpoint của Tank Horizon để quản lý Players, Matches và Match Results.
 
 ## Base URL
 
-All API endpoints are relative to the base URL: `http://localhost:8080/api`
+Tất cả các API endpoint đều liên quan đến URL cơ sở: `http://localhost:8080/api`
 
 ## Players API
 
-### Create a new player
+### Tạo người chơi mới
 - **Endpoint**: `POST /player`
-- **Description**: Creates a new player in the database.
+- **Mô tả**: Tạo người chơi mới trong cơ sở dữ liệu với ID tự động tăng.
 - **Request Body**:
   ```json
   {
@@ -28,14 +28,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 409 Conflict: Username already exists
+    - 409 Conflict: Tên người dùng đã tồn tại
     - 500 Internal Server Error
 
-### Get player by username
+### Lấy thông tin người chơi theo tên
 - **Endpoint**: `GET /player/:username`
-- **Description**: Retrieves player information by username.
+- **Mô tả**: Lấy thông tin người chơi theo tên người dùng.
 - **Parameters**:
-  - `username`: Player's username (URL parameter)
+  - `username`: Tên người chơi (tham số URL)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -46,14 +46,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 404 Not Found: Player not found
+    - 404 Not Found: Không tìm thấy người chơi
     - 500 Internal Server Error
 
-### Delete player by username
+### Xóa người chơi theo tên
 - **Endpoint**: `DELETE /player/:username`
-- **Description**: Deletes a player by username.
+- **Mô tả**: Xóa người chơi theo tên người dùng.
 - **Parameters**:
-  - `username`: Player's username (URL parameter)
+  - `username`: Tên người chơi (tham số URL)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -63,14 +63,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 404 Not Found: Player not found
+    - 404 Not Found: Không tìm thấy người chơi
     - 500 Internal Server Error
 
 ## Matches API
 
-### Create a new match
+### Tạo trận đấu mới
 - **Endpoint**: `POST /matches`
-- **Description**: Creates a new match with a specified room ID.
+- **Mô tả**: Tạo trận đấu mới với một ID phòng cụ thể.
 - **Request Body**:
   ```json
   {
@@ -78,6 +78,7 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     "playerId": 1
   }
   ```
+  - Lưu ý: `playerId` phải là một số nguyên hợp lệ (INT) tham chiếu đến PlayerID trong bảng Player
 - **Response**:
   - **Status Code**: 201 (Created)
   - **Body**:
@@ -89,14 +90,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 400 Bad Request: Missing required fields
+    - 400 Bad Request: Thiếu trường bắt buộc
     - 500 Internal Server Error
 
-### Get match by room ID
+### Lấy trận đấu theo ID phòng
 - **Endpoint**: `GET /matches/:roomId`
-- **Description**: Retrieves match information by room ID.
+- **Mô tả**: Lấy thông tin trận đấu theo ID phòng.
 - **Parameters**:
-  - `roomId`: Room/Match ID (URL parameter, string)
+  - `roomId`: ID Phòng/Trận đấu (tham số URL, chuỗi)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -104,19 +105,19 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     {
       "MatchID": "ABC123",
       "PlayerID": 1,
-      "Starttime": "2025-04-12T12:34:56.789Z",
-      "Endtime": null
+      "StartTime": "2025-04-12T12:34:56.789Z",
+      "EndTime": "2025-04-12T13:34:56.789Z"
     }
     ```
   - **Error Responses**:
-    - 404 Not Found: Match not found
+    - 404 Not Found: Không tìm thấy trận đấu
     - 500 Internal Server Error
 
-### Update match end time
+### Cập nhật thời gian kết thúc trận đấu
 - **Endpoint**: `PUT /matches/:roomId`
-- **Description**: Updates the end time of a match when it completes.
+- **Mô tả**: Cập nhật thời gian kết thúc của trận đấu khi nó hoàn thành.
 - **Parameters**:
-  - `roomId`: Room/Match ID (URL parameter, string)
+  - `roomId`: ID Phòng/Trận đấu (tham số URL, chuỗi)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -127,14 +128,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 404 Not Found: Match not found
+    - 404 Not Found: Không tìm thấy trận đấu
     - 500 Internal Server Error
 
-### Delete match by room ID
+### Xóa trận đấu theo ID phòng
 - **Endpoint**: `DELETE /matches/:roomId`
-- **Description**: Deletes a match by room ID.
+- **Mô tả**: Xóa trận đấu theo ID phòng.
 - **Parameters**:
-  - `roomId`: Room/Match ID (URL parameter, string)
+  - `roomId`: ID Phòng/Trận đấu (tham số URL, chuỗi)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -144,14 +145,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 404 Not Found: Match not found
+    - 404 Not Found: Không tìm thấy trận đấu
     - 500 Internal Server Error
 
 ## Match Results API
 
-### Create a new match result
+### Tạo kết quả trận đấu mới
 - **Endpoint**: `POST /matchResult`
-- **Description**: Creates a new match result record.
+- **Mô tả**: Tạo bản ghi kết quả trận đấu mới với ResultID tự động tăng.
 - **Request Body**:
   ```json
   {
@@ -160,11 +161,13 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     "deviceId": "device123",
     "username": "PlayerName",
     "deviceName": "Player's Device",
+    "kd": "3/1",
     "numRound": 3,
-    "status": "winner",
+    "status": "Victory",
     "score": 1000
   }
   ```
+  - Lưu ý: `playerId` phải là số nguyên (INT) tham chiếu đến PlayerID trong bảng Player
 - **Response**:
   - **Status Code**: 201 (Created)
   - **Body**:
@@ -175,14 +178,14 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
     }
     ```
   - **Error Responses**:
-    - 400 Bad Request: Missing required fields
+    - 400 Bad Request: Thiếu trường bắt buộc
     - 500 Internal Server Error
 
-### Get match results by username
+### Lấy kết quả trận đấu theo tên người dùng
 - **Endpoint**: `GET /matchResult/user/:username`
-- **Description**: Retrieves all match results for a specific user.
+- **Mô tả**: Lấy tất cả kết quả trận đấu cho một người dùng cụ thể.
 - **Parameters**:
-  - `username`: Player's username (URL parameter)
+  - `username`: Tên người chơi (tham số URL)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -195,24 +198,25 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
         "DeviceID": "device123",
         "Username": "PlayerName",
         "DeviceName": "Player's Device",
+        "KD": "3/1",
         "NumRound": 3,
-        "Statu": "winner",
+        "Statu": "Victory",
         "CreateTime": "2025-04-12T12:34:56.789Z",
         "Score": 1000,
-        "Starttime": "2025-04-12T12:00:00.000Z",
-        "Endtime": "2025-04-12T12:45:00.000Z"
+        "StartTime": "2025-04-12T12:00:00.000Z",
+        "EndTime": "2025-04-12T12:45:00.000Z"
       }
     ]
     ```
   - **Error Responses**:
-    - 404 Not Found: No match results found
+    - 404 Not Found: Không tìm thấy kết quả trận đấu
     - 500 Internal Server Error
 
-### Get match results by match ID
+### Lấy kết quả trận đấu theo ID trận đấu
 - **Endpoint**: `GET /matchResult/match/:matchId`
-- **Description**: Retrieves all match results for a specific match.
+- **Mô tả**: Lấy tất cả kết quả trận đấu cho một trận đấu cụ thể.
 - **Parameters**:
-  - `matchId`: Match ID (URL parameter, string)
+  - `matchId`: ID trận đấu (tham số URL, chuỗi)
 - **Response**:
   - **Status Code**: 200 (OK)
   - **Body**:
@@ -225,15 +229,16 @@ All API endpoints are relative to the base URL: `http://localhost:8080/api`
         "DeviceID": "device123",
         "Username": "PlayerName",
         "DeviceName": "Player's Device",
+        "KD": "3/1",
         "NumRound": 3,
-        "Statu": "winner",
+        "Statu": "Victory",
         "CreateTime": "2025-04-12T12:34:56.789Z",
         "Score": 1000
       }
     ]
     ```
   - **Error Responses**:
-    - 404 Not Found: No match results found
+    - 404 Not Found: Không tìm thấy kết quả trận đấu
     - 500 Internal Server Error
 
 ## Lưu ý và cân nhắc khi sử dụng API

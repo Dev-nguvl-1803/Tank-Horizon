@@ -45,17 +45,47 @@ socket.on('disconnect', () => {
     connected = false;
 });
 
-function createNewGame() {
+async function createNewGame() {
     const nameInput = document.getElementById('newName-create');
     const name = nameInput.value.trim();
+    var already = false;
 
     if (!name) {
         alert('Vui lòng nhập tên của bạn!');
         return;
     }
 
-    playerName = name;
-    socket.emit('newGame', { name: playerName });
+    socket.emit('wipRoom', { name: name });
+    socketRegistry.on('playerAlreadyInRoom', async (data) => {
+        if (data.message.includes(name)) {
+            showError(`<b>Không thể tham gia!</b><br>${data.message}`);
+        } else {
+            playerName = name;
+            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(playerName)}`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then(async response => {
+                if (!response.ok) {
+                    if (response.status == 404) {
+                        console.log(response)
+                        await fetch('http://localhost:8080/api/player', {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username: playerName })
+                        })
+                    }
+                }
+            }).then(() => {
+                socket.emit('newGame', { name: playerName });
+                socket.emit('deviceConnect', { name: playerName })
+            }).catch(error => console.error('Error:', error));
+        }
+    });
+
 }
 
 function joinExistingGame() {
@@ -68,14 +98,40 @@ function joinExistingGame() {
         return;
     }
 
-    playerName = name;
-    getRoom(id, true);
-    socketRegistry.on('sendRoom', (data) => {
-        if (data.gameInProgress) {
-            showError('Trò chơi đã bắt đầu, không thể tham gia!');
-            return;
+    socket.emit('wipRoom', { name: name });
+    socketRegistry.on('playerAlreadyInRoom', async (data) => {
+        playerName = name;
+        if (data.message.includes(name)) {
+            showError(`<b>Không thể tham gia!</b><br>${data.message}`);
         } else {
-            socket.emit('joinGame', { name: playerName, id });
+            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(playerName)}`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then(async response => {
+                if (!response.ok) {
+                    if (response.status == 404) {
+                        await fetch('http://localhost:8080/api/player', {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username: playerName })
+                        });
+                    }
+                }
+            }).then(() => {
+                getRoom(id, true);
+                socketRegistry.on('sendRoom', (data) => {
+                    if (data.gameInProgress) {
+                        showError('Trò chơi đã bắt đầu, không thể tham gia!');
+                        return;
+                    } else {
+                        socket.emit('joinGame', { name: playerName, id });
+                    }
+                });
+            })
         }
     });
 }
@@ -85,7 +141,36 @@ function autoJoin() {
     const name = nameInput.value.trim();
 
     if (!name) return;
-    socket.emit('autoJoin', { name: name });
+
+    socket.emit('wipRoom', { name: name });
+    socketRegistry.on('playerAlreadyInRoom', async (data) => {
+        if (data.message.includes(name)) {
+            showError(`<b>Không thể tham gia!</b><br>${data.message}`);
+        } else {
+            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(name)}`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then(async response => {
+                if (!response.ok) {
+                    if (response.status == 404) {
+                        console.log("Đếch ổn");
+                        await fetch('http://localhost:8080/api/player', {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username: name })
+                        });
+                        console.log("Đã tạo");
+                    }
+                }
+            }).then(() => {
+                socket.emit('autoJoin', { name: name });
+            })
+        }
+    })
 }
 
 function getRoom(id, isRoom) {
@@ -224,9 +309,13 @@ function setupSocketCListeners() {
         alert(`ID phòng ${roomId} không tồn tại!`);
     });
 
-    socketRegistry.on('');
+    socketRegistry.on('playerRoomCheck', (data) => {
+        if (!data.inRoom) {
+            console.log("Người chơi chưa trong phòng nào, có thể tham gia");
+        }
+    });
+
     socketRegistry.on('playerKick', (data) => {
-        console.log('EOOEOEOOEOEO:', data);
         if (data.message.includes("host")) {
             showError(data.message);
         } else if (data.message.includes("Bạn đã bị kick khỏi phòng")) {
@@ -245,7 +334,7 @@ function setupSocketCListeners() {
         }
     });
 
-    socketRegistry.on('waitingRoom', (data) => {
+    socketRegistry.on('waitingRoom', async (data) => {
         roomId = data.roomId;
         isHost = false;
         gameInProgress = false;
@@ -466,7 +555,7 @@ function setupSocketCListeners() {
             if (data.playerCount > 1) {
                 startBtn.innerText = `Bắt đầu ngay ${data.playerCount}/4`;
             } else {
-                startBtn.remove();
+                // startBtn.remove();
                 const startText = document.querySelector(`.start-text#owner`);
                 startText.innerText = `Vui lòng chờ người chơi tham gia ...`;
             }
@@ -493,22 +582,109 @@ function setupSocketCListeners() {
     socketRegistry.on('scoreUpdated', (data) => {
         if (data.id === socket.id) {
             score = data.score;
-            scoreElement.textContent = score;
+            // scoreElement.textContent = score;
         }
 
         if (window.updateScore) {
             window.updateScore(data.id, data.score);
         }
-    });
-
-    socketRegistry.on('gameOver', (data) => {
+    }); socketRegistry.on('gameOver', async (data) => {
         gameInProgress = false;
-
-        alert(`Trò chơi kết thúc! ${data.winner.name} đã chiến thắng với điểm số ${data.winner.score}`);
 
         if (window.endGame) {
             window.endGame(data);
         }
+
+        // Chỉ xử lý tạo Match nếu người chơi hiện tại là host
+        for (const player of data.putSQL.players) {
+            if (player.isHost && player.id === socket.id) {
+                console.log("Host đang xử lý lưu kết quả trận đấu");
+                try {
+                    const playerResponse = await fetch(`http://localhost:8080/api/player/${encodeURIComponent(player.name)}`);
+                    const playerData = await playerResponse.json();
+
+                    // Kiểm tra xem match đã tồn tại chưa
+                    const checkMatch = await fetch(`http://localhost:8080/api/matches/${roomId}`);
+
+                    if (checkMatch.status === 404) {
+                        console.log("Trận đấu chưa tồn tại, tạo mới");
+                        // Match chưa tồn tại, tạo mới
+                        await fetch('http://localhost:8080/api/matches', {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                roomId: roomId,
+                                playerId: playerData.PlayerID,
+                                startTime: data.putSQL.startTime,
+                                endTime: data.putSQL.endTime,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Lỗi khi tạo match: ${response.status}`);
+                            }
+                            return response.json();
+                        }).then(data => {
+                            console.log("Đã tạo match thành công:", data);
+                        });
+                    } else {
+                        console.log("Trận đấu đã tồn tại, cập nhật thông tin");
+                        await fetch(`http://localhost:8080/api/matches/${roomId}`, {
+                            method: "PUT",
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                endTime: data.putSQL.endTime,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Lỗi khi cập nhật match: ${response.status}`);
+                            }
+                            console.log("Đã cập nhật match thành công");
+                        });
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi xử lý lưu trận đấu:", error);
+                }
+            }
+        }
+        setTimeout(async() => {
+            for (const player of data.putSQL.players) {
+                if (player.id == socket.id) {
+                    const device = localStorage.getItem('tank-horizon-device-id');
+                    await fetch(`http://localhost:8080/api/player/${decodeURIComponent(player.name)}`)
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                        }).then(async playerData => {
+                            const kill = data.putSQL.players.find(player => player.id == socket.id).kill
+                            const death = data.putSQL.players.find(player => player.id == socket.id).death
+
+                            await fetch('http://localhost:8080/api/matchResult', {
+                                method: "POST",
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    matchId: data.putSQL.match,
+                                    playerId: playerData.PlayerID,
+                                    deviceId: device,
+                                    username: player.name,
+                                    kd: `${kill}/${death}`,
+                                    deviceName: navigator.userAgentData.platform || navigator.platform,
+                                    numRound: data.putSQL.round,
+                                    status: player.score >= 1000 ? "Victory" : "Defeat",
+                                    score: player.score,
+                                })
+                            });
+                        });
+                }
+            }
+        }, 1500)
+        showError(`Trò chơi kết thúc! ${data.winner.name} đã chiến thắng với điểm số ${data.winner.score}`);
     });
 
     socketRegistry.on('spectateMode', (data) => {
@@ -553,8 +729,8 @@ function setupSocketCListeners() {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('newGame').addEventListener('click', () => {
-        createNewGame();
+    document.getElementById('newGame').addEventListener('click', async () => {
+        await createNewGame();
     });
     document.getElementById('btnJoinroom').addEventListener('click', () => {
         joinExistingGame();

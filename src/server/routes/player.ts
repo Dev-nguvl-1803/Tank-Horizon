@@ -4,22 +4,17 @@ import { pool } from '../server';
 
 const router = express.Router();
 
-// Create a new player
 router.post('/', async (req, res) => {
   try {
     const { username } = req.body;
-    
-    // Check if username already exists
     const checkResult = await pool.request()
-      .input('username', sql.NVarChar(10), username)
+      .input('username', sql.NVarChar(100), username)
       .query('SELECT COUNT(*) AS count FROM Player WHERE Username = @username');
-    
-    if (checkResult.recordset[0].count > 0) {
+      if (checkResult.recordset[0].count > 0) {
       res.status(409).json({ error: 'Username already exists' });
     } else {
-        // Insert new player
         const result = await pool.request()
-          .input('username', sql.NVarChar(10), username)
+          .input('username', sql.NVarChar(100), username)
           .query('INSERT INTO Player (Username) VALUES (@username); SELECT SCOPE_IDENTITY() AS playerId');
         
         res.status(201).json({ 
@@ -35,13 +30,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get player by username
 router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
-    
-    const result = await pool.request()
-      .input('username', sql.NVarChar(10), username)
+      const result = await pool.request()
+      .input('username', sql.NVarChar(100), username)
       .query('SELECT * FROM Player WHERE Username = @username');
     
     if (result.recordset.length === 0) {
@@ -55,13 +48,11 @@ router.get('/:username', async (req, res) => {
   }
 });
 
-// Delete player by username
 router.delete('/:username', async (req, res) => {
   try {
     const { username } = req.params;
-    
-    const result = await pool.request()
-      .input('username', sql.NVarChar(10), username)
+      const result = await pool.request()
+      .input('username', sql.NVarChar(100), username)
       .query('DELETE FROM Player WHERE Username = @username');
     
     if (result.rowsAffected[0] === 0) {

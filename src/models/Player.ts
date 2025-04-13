@@ -44,6 +44,8 @@ export class Player {
   private _lastPosition: { x: number, y: number } = { x: 0, y: 0 };
   private _lastRotation: number = 0;
   private _isHost: boolean = false;
+  private _kill: number = 0;
+  private _death: number = 0;
 
   constructor(id: string, name: string, roomId: string) {
     this._id = id;
@@ -51,6 +53,22 @@ export class Player {
     this._name = name;
     this._color = "";
     this.spawn();
+  }
+
+  get kill(): number {
+    return this._kill;
+  }
+
+  set kill(value: number) {
+    this._kill = value;
+  }
+
+  get death(): number {
+    return this._death;
+  }
+
+  set death(value: number) {
+    this._death = value;
   }
 
   get id(): string {
@@ -213,8 +231,7 @@ export class Player {
 
   /**
    * Convert object to JSON for socket communication
-   */
-  toJSON() {
+   */  toJSON() {
     return {
       id: this._id,
       roomId: this._roomId,
@@ -228,7 +245,9 @@ export class Player {
       powerup: this._powerup,
       ready: this._ready,
       bulletCount: this._bulletCount,
-      isHost: this._isHost
+      isHost: this._isHost,
+      kill: this._kill,
+      death: this._death
     };
   }
 }

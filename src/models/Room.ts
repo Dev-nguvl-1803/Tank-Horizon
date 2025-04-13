@@ -40,6 +40,8 @@ export class Room {
   private _isResetting: boolean = false;
   private _socket: Socket;
   private _io: Server;
+  private _startTime: Date | null = null;
+  private _endTime: Date | null = null;
   private _settings: {
     maxPlayers: number;
     maxBullets: number;
@@ -53,6 +55,23 @@ export class Room {
     this._socket = socket;
     this._settings = settings;
     this._map = this.generateRandomMap(type);
+    this._startTime = null;
+    this._endTime = null;
+  }
+
+  get startTime(): Date | null {
+    return this._startTime;
+  }
+  set startTime(value: Date | null) {
+    this._startTime = value;
+  }
+  
+  get endTime(): Date | null {
+    return this._endTime;
+  }
+
+  set endTime(value: Date | null) {
+    this._endTime = value;
   }
 
   get id(): string {
@@ -168,18 +187,18 @@ export class Room {
         }
         return;
       }
-      
+
       // Chỉ tạo buff bomb nếu chưa đạt giới hạn 2 buff mỗi round
       if (this._bombsSpawnedThisRound < 2) {
         const powerup = this.createBombPowerup();
         this._powerups.push(powerup);
         this._io.to(this._id).emit('newPowerup', powerup);
-        
+
         // Tăng bộ đếm bomb đã xuất hiện
         this._bombsSpawnedThisRound++;
-        
+
         console.log(`[Room ${this._id}] Đã tạo bomb powerup (${this._bombsSpawnedThisRound}/2)`);
-        
+
         // Nếu đã đạt giới hạn 2 bomb, xóa interval
         if (this._bombsSpawnedThisRound >= 2) {
           if (this._powerupInterval) {
@@ -193,19 +212,19 @@ export class Room {
 
   createBombPowerup(): any {
     const type = 'bomb';
-    
+
     // Kích thước của bản đồ
     const tileSize = 68;
-    
+
     // Tạo vị trí ngẫu nhiên tránh lề và tường
     // Tạo vị trí powerup ở giữa các ô để tránh tường
     const col = Math.floor(Math.random() * 10) + 1;
     const row = Math.floor(Math.random() * 10) + 1;
-    
+
     // Tính vị trí trung tâm của ô
     const x = (col - 0.5) * tileSize;
     const y = (row - 0.5) * tileSize;
-    
+
     return {
       x: x,
       y: y,
@@ -237,12 +256,12 @@ export class Room {
 
     const newMap = this.generateRandomMap("ok");
     this._map = newMap;
-    
+
     // Reset số lượng bomb đã xuất hiện và kích hoạt lại powerupSpawner
     console.log(`Đặt bom thôi`)
     this._bombsSpawnedThisRound = 0;
     this.powerupSpawner();
-    
+
     for (const p of this._players) {
       p.alive = true;
       p.ready = false;
@@ -256,7 +275,7 @@ export class Room {
       round: this._round
     });
 
-    for(let i = 0; i < 1; i++) {
+    for (let i = 0; i < 1; i++) {
       this._io.to(this._id).emit('drawBoard', this._map);
     }
 

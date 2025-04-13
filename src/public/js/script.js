@@ -8,6 +8,49 @@ volumeSlider.addEventListener("input", function () {
     backgroundMusic.volume = this.value / 100;
 })
 
+// Tạo và quản lý Device ID
+function generateDeviceId() {
+    // Tạo device ID ngẫu nhiên với 12 ký tự
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let deviceId = '';
+    for (let i = 0; i < 12; i++) {
+        deviceId += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    // Thêm ngày giờ để đảm bảo tính duy nhất
+    return deviceId + '-' + Date.now().toString(36);
+}
+
+function getDeviceId() {
+    // Lấy ID từ localStorage hoặc tạo mới nếu chưa có
+    let deviceId = localStorage.getItem('tank-horizon-device-id');
+    
+    if (!deviceId) {
+        deviceId = generateDeviceId();
+        localStorage.setItem('tank-horizon-device-id', deviceId);
+    }
+    
+    return deviceId;
+}
+
+function displayDeviceId() {
+    // Hiển thị device ID nếu người dùng đang ở menu chính
+    const menuElement = document.getElementById('menu');
+    const deviceIdDisplay = document.getElementById('device-id-display');
+    const deviceIdSpan = document.getElementById('device-id');
+    
+    if (menuElement && deviceIdDisplay) {
+        // Chỉ hiển thị khi menu chính được hiển thị
+        const isMenuVisible = window.getComputedStyle(menuElement).display !== 'none';
+        
+        if (isMenuVisible) {
+            deviceIdSpan.textContent = getDeviceId();
+            deviceIdDisplay.style.display = 'block';
+        } else {
+            deviceIdDisplay.style.display = 'none';
+        }
+    }
+}
+
 window.addEventListener('click', () => {
     backgroundMusic.play();
 }, { once: true });
@@ -24,6 +67,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeSettings.addEventListener('click', () => {
         settingsWindow.classList.add('hidden');
+    });
+
+    // Hiển thị Device ID ban đầu
+    displayDeviceId();
+    
+    // Đảm bảo ID device được cập nhật khi chuyển đổi giữa các màn hình
+    const playBtn = document.getElementById('play-btn');
+    const closePlay = document.getElementById('close-play');
+    
+    playBtn.addEventListener('click', () => {
+        // Ẩn khi vào màn hình chọn phòng
+        document.getElementById('device-id-display').style.display = 'none';
+    });
+    
+    closePlay.addEventListener('click', () => {
+        // Hiện lại khi quay về màn hình chính
+        document.getElementById('device-id-display').style.display = 'block';
     });
 });
 
@@ -69,43 +129,77 @@ function addRandomItems() {
     var item = document.createElement('img');
     item.src = images[Math.floor(Math.random() * images.length)];
     item.className = 'random-item';
+    
+    // Giảm kích thước xe tăng xuống còn khoảng 30px
+    const tankSize = 30;
+    item.style.width = `${tankSize}px`;
+    item.style.height = 'auto';
+    
+    // Đảm bảo xe tăng luôn ở dưới các thành phần khác
+    item.style.zIndex = "-10";
 
+    // Tăng khoảng cách từ rìa màn hình để tránh mắc kẹt
+    const safeMargin = 100;
     var startPosition = Math.floor(Math.random() * 4);
-    var endPosition = (startPosition + 2) % 4;
+    var endPosition = (startPosition + 2) % 4; // Đảm bảo đi qua màn hình, không đi thẳng ra
     var startX, startY, endX, endY;
 
+    // Vị trí bắt đầu ở ngoài màn hình nhiều hơn
     switch (startPosition) {
-        case 0: startX = Math.random() * window.innerWidth; startY = -50; break;
-        case 1: startX = window.innerWidth + 50; startY = Math.random() * window.innerHeight; break;
-        case 2: startX = Math.random() * window.innerWidth; startY = window.innerHeight + 50; break;
-        case 3: startX = -50; startY = Math.random() * window.innerHeight; break;
+        case 0: startX = safeMargin + Math.random() * (window.innerWidth - 2 * safeMargin); startY = -safeMargin; break;
+        case 1: startX = window.innerWidth + safeMargin; startY = safeMargin + Math.random() * (window.innerHeight - 2 * safeMargin); break;
+        case 2: startX = safeMargin + Math.random() * (window.innerWidth - 2 * safeMargin); startY = window.innerHeight + safeMargin; break;
+        case 3: startX = -safeMargin; startY = safeMargin + Math.random() * (window.innerHeight - 2 * safeMargin); break;
     }
 
+    // Vị trí kết thúc cũng ở ngoài màn hình nhiều hơn
     switch (endPosition) {
-        case 0: endX = Math.random() * window.innerWidth; endY = -50; break;
-        case 1: endX = window.innerWidth + 50; endY = Math.random() * window.innerHeight; break;
-        case 2: endX = Math.random() * window.innerWidth; endY = window.innerHeight + 50; break;
-        case 3: endX = -50; endY = Math.random() * window.innerHeight; break;
+        case 0: endX = safeMargin + Math.random() * (window.innerWidth - 2 * safeMargin); endY = -safeMargin; break;
+        case 1: endX = window.innerWidth + safeMargin; endY = safeMargin + Math.random() * (window.innerHeight - 2 * safeMargin); break;
+        case 2: endX = safeMargin + Math.random() * (window.innerWidth - 2 * safeMargin); endY = window.innerHeight + safeMargin; break;
+        case 3: endX = -safeMargin; endY = safeMargin + Math.random() * (window.innerHeight - 2 * safeMargin); break;
     }
 
     item.style.left = startX + 'px';
     item.style.top = startY + 'px';
 
-    var duration = 15 + Math.random() * 10;
+    // Kéo dài thời gian di chuyển để tạo cảm giác chậm hơn
+    var duration = 25 + Math.random() * 15; // 25-40s
     var uniqueId = new Date().getTime() + Math.random().toString(16).slice(2);
     var initialRotation = Math.random() * 360;
-    var rotationAmount = (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 720);
+    
+    // Giảm tốc độ xoay để trông tự nhiên hơn
+    var rotationAmount = (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360);
+
+    // Thêm animation đường bay có thể là đường cong nhẹ thay vì đường thẳng
+    const bezierX1 = 0.3 + Math.random() * 0.4; // 0.3-0.7
+    const bezierY1 = 0.3 + Math.random() * 0.4; // 0.3-0.7
+    const bezierX2 = 0.3 + Math.random() * 0.4; // 0.3-0.7
+    const bezierY2 = 0.3 + Math.random() * 0.4; // 0.3-0.7
 
     var styleSheet = document.createElement("style");
     styleSheet.innerHTML = `
         @keyframes moveAndRotate${uniqueId} {
-            from { transform: translate(0, 0) rotate(${initialRotation}deg); }
-            to { transform: translate(${endX - startX}px, ${endY - startY}px) rotate(${initialRotation + rotationAmount}deg); }
+            0% { 
+                transform: translate(0, 0) rotate(${initialRotation}deg); 
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% { 
+                transform: translate(${endX - startX}px, ${endY - startY}px) rotate(${initialRotation + rotationAmount}deg);
+                opacity: 0;
+            }
         }
     `;
     document.head.appendChild(styleSheet);
 
-    item.style.animation = `moveAndRotate${uniqueId} ${duration}s linear forwards`;
+    // Thêm cubic-bezier để tạo đường bay cong, tự nhiên hơn
+    item.style.animation = `moveAndRotate${uniqueId} ${duration}s cubic-bezier(${bezierX1}, ${bezierY1}, ${bezierX2}, ${bezierY2}) forwards`;
     document.body.appendChild(item);
 
     // Xóa item sau khi animation kết thúc
@@ -202,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nameValue = nameInput.value.trim();
         if (nameValue === "") {
             showError("<b>Thất bại!</b><br>Tên không được để trống");
+            return;
         }
     });
 
@@ -362,3 +457,105 @@ function showError(message) {
         setTimeout(() => errorDiv.remove(), 500);
     }, 3000);
 }
+
+// The history
+document.addEventListener('DOMContentLoaded', () => {
+    const historyBtn = document.getElementById('btnHistory');
+    const historyWindow = document.getElementById('History-window');
+    const historyClose = document.getElementById('close-History');
+    const playMenu = document.getElementById("menu");
+    const searchInput = document.querySelector('.search-bar input');
+
+    historyBtn.addEventListener('click', () => {
+        historyWindow.classList.remove('hidden');
+    });
+
+    historyClose.addEventListener('click', () => {
+        historyWindow.classList.add('hidden');
+    });
+
+    historyBtn.addEventListener("click", function () {
+        playMenu.style.display = "none";
+        historyWindow.style.display = "block";
+    });
+
+    historyClose.addEventListener("click", function () {
+        historyWindow.style.display = "none";
+        playMenu.style.display = "flex";
+    });
+
+    // Xử lý sự kiện nhấn Enter trong ô tìm kiếm
+    searchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const searchValue = this.value.trim();
+            if (searchValue) {
+                searchByUsername(searchValue);
+            }
+        }
+    });
+
+    function searchByUsername(username) {
+
+        fetch(`/api/matchResult/user/${encodeURIComponent(username)}`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Không tìm thấy kết quả nào cho người chơi này');
+                    }
+                    throw new Error('Lỗi khi tìm kiếm');
+                }
+                return response.json();
+            })
+            .then(results => {
+                displaySearchResults(results);
+            })
+            .catch(error => {
+                showError(`<b>Thất bại!</b><br>${error.message}`);
+                // Xóa nội dung hiện tại nếu tìm kiếm không có kết quả
+                document.querySelector('.history-content').innerHTML = `
+                    <div class="no-results">Không tìm thấy kết quả nào</div>
+                `;
+            });
+    }
+
+    function displaySearchResults(results) {
+        const historyContent = document.querySelector('.history-content');
+        const historyWindow = document.getElementById('History-window');
+        const gameHistory = results;
+        function renderHistory() {
+            historyContent.innerHTML = "";
+            for (let i = 0; i < gameHistory.length; i++) {
+                const item = gameHistory[i];
+                console.log("Ờ thế có gì không?", item);
+                const row = document.createElement('div');
+                row.classList.add('history-row');
+                // Function to convert date to relative time
+                function getRelativeTime(dateString) {
+                    const now = new Date();
+                    const past = new Date(dateString);
+                    const diff = Math.floor((now - past) / 1000); // difference in seconds
+                    
+                    if (diff < 60) return `${diff} giây trước`;
+                    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+                    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+                    if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
+                    if (diff < 31536000) return `${Math.floor(diff / 2592000)} tháng trước`;
+                    return `${Math.floor(diff / 31536000)} năm trước`;
+                }
+
+                row.innerHTML = `
+                    <div>${item.DeviceName}</div>
+                    <div>${item.Username}</div>
+                    <div>${item.KD} (${item.Score})</div>
+                    <div>${item.NumRound}</div>
+                    <div>${item.Statu}</div>
+                    <div>${getRelativeTime(item.CreateTime)}</div>
+                `;
+                historyContent.appendChild(row);
+            }
+        }
+        renderHistory();
+        historyWindow.classList.remove('hidden');
+    }
+});

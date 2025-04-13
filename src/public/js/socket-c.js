@@ -22,7 +22,7 @@ let localPlayer = null;
 let pendingGameData = null;
 let gameScene;
 let gameInitialized = false;
-let canShoot = true; 
+let canShoot = true;
 let coutn = 0;
 let resetInProgress = 0;
 var killOwnerBullet = {}
@@ -58,9 +58,9 @@ class Scene extends Phaser.Scene {
         this.load.image('bomb', '/assets/buff/bomb.png');
 
         // Add bomb-specific functions
-        this.placeBomb = function(x, y, ownerId) {
+        this.placeBomb = function (x, y, ownerId) {
             console.log('Placing bomb at:', x, y);
-            
+
             // Create bomb sprite
             const bomb = this.physics.add.sprite(x, y, 'bomb');
             bomb.setScale(0.4);
@@ -68,17 +68,17 @@ class Scene extends Phaser.Scene {
             bomb.bombId = `bomb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
             bomb.ownerId = ownerId;
             bomb.isArmed = false;
-            
+
             // Store the bomb reference
             if (!this.bombs) this.bombs = {};
             this.bombs[bomb.bombId] = bomb;
-            
+
             // Create a safety timer (3 seconds)
             this.time.delayedCall(3000, () => {
                 if (bomb && bomb.active) {
                     bomb.isArmed = true;
                     console.log('Bomb is now armed!');
-                    
+
                     // Add a pulsing effect to indicate armed state
                     this.tweens.add({
                         targets: bomb,
@@ -87,10 +87,10 @@ class Scene extends Phaser.Scene {
                         yoyo: true,
                         repeat: -1
                     });
-                    
+
                     // Add collision detection with players
                     this.setupBombTrigger(bomb);
-                    
+
                     // Emit event to tell other clients the bomb is armed
                     socket.emit('bombArmed', {
                         bombId: bomb.bombId,
@@ -99,16 +99,16 @@ class Scene extends Phaser.Scene {
                     });
                 }
             });
-            
+
             return bomb;
         };
-        
-        this.setupBombTrigger = function(bomb) {
+
+        this.setupBombTrigger = function (bomb) {
             // Create trigger area around the bomb (larger than the bomb itself)
             const triggerRadius = 50;
             bomb.triggerArea = this.add.circle(bomb.x, bomb.y, triggerRadius, 0xff0000, 0.0);
             this.physics.add.existing(bomb.triggerArea);
-            
+
             // Check for players entering the trigger area
             for (const id in this.playerSprites) {
                 const playerSprite = this.playerSprites[id];
@@ -119,14 +119,14 @@ class Scene extends Phaser.Scene {
                 });
             }
         };
-        
-        this.explodeBomb = function(bomb) {
+
+        this.explodeBomb = function (bomb) {
             if (!bomb || !bomb.active) return;
             if (bomb.isExploding) return;  // Prevent multiple explosions
-            
+
             bomb.isExploding = true;
             console.log('Bomb exploding!', bomb.bombId);
-            
+
             // Notify server about explosion
             socket.emit('bombExploded', {
                 bombId: bomb.bombId,
@@ -135,62 +135,62 @@ class Scene extends Phaser.Scene {
                 ownerId: bomb.ownerId,
                 timestamp: Date.now() // Thêm timestamp để đồng bộ thời gian nổ
             });
-            
+
             // Tạm dừng xử lý hiệu ứng và damage cho đến khi nhận được lệnh từ server
             // để đảm bảo tất cả client xử lý vụ nổ cùng một thời điểm
         };
-        
+
         // Tách riêng phần xử lý hiệu ứng nổ và damage để server kiểm soát
-        this.processBombExplosion = function(bombData) {
+        this.processBombExplosion = function (bombData) {
             console.log('Xử lý vụ nổ bomb:', bombData);
-            
+
             // Create explosion effect
             this.createExplosionEffect(bombData.x, bombData.y);
-            
+
             // Apply camera shake
             this.cameras.main.shake(200, 0.01);
-            
+
             // Check which players are caught in the explosion
             const explosionRadius = 100;
             for (const id in this.playerSprites) {
                 const playerSprite = this.playerSprites[id];
                 if (!playerSprite || !playerSprite.active) continue;
-                
+
                 // Calculate distance from bomb to player
                 const distance = Phaser.Math.Distance.Between(
-                    bombData.x, bombData.y, 
+                    bombData.x, bombData.y,
                     playerSprite.x, playerSprite.y
                 );
-                
+
                 if (distance <= explosionRadius) {
                     console.log('Player caught in explosion:', id);
                     // Kill the player caught in the explosion
                     window.socketA.playerDied(id, bombData.ownerId);
                 }
             }
-            
+
             // Xử lý xóa bomb khỏi scene
             if (this.bombs) {
                 // Xóa bomb từ data của scene
                 const bomb = this.bombs[bombData.bombId];
                 if (bomb && bomb.active) {
                     console.log('Đang xóa bomb:', bombData.bombId);
-                    
+
                     // Dừng tất cả tweens trên bomb (hiệu ứng nhấp nháy, v.v.)
                     this.tweens.killTweensOf(bomb);
-                    
+
                     // Xóa trigger area một cách an toàn
                     if (bomb.triggerArea) {
                         bomb.triggerArea.destroy();
                         bomb.triggerArea = null;
                     }
-                    
+
                     // Xóa bomb sprite
                     bomb.destroy();
-                    
+
                     // Quan trọng: Xóa bomb từ object cache của scene
                     delete this.bombs[bombData.bombId];
-                    
+
                     console.log('Đã xóa bomb thành công:', bombData.bombId);
                 } else {
                     // Tìm bomb trên bản đồ dựa vào tọa độ trong trường hợp ID không khớp
@@ -201,7 +201,7 @@ class Scene extends Phaser.Scene {
                             const distance = Phaser.Math.Distance.Between(b.x, b.y, bombData.x, bombData.y);
                             if (distance < 10) { // Nếu bomb ở gần vị trí nổ
                                 console.log('Tìm thấy bomb gần vị trí nổ, đang xóa:', key);
-                                
+
                                 // Xóa giống như trên
                                 this.tweens.killTweensOf(b);
                                 if (b.triggerArea) {
@@ -214,24 +214,24 @@ class Scene extends Phaser.Scene {
                             }
                         }
                     });
-                    
+
                     if (!foundBomb) {
                         console.log('Không tìm thấy bomb nào để xóa tại:', bombData.x, bombData.y);
                     }
                 }
             }
-            
+
             // Thêm log để debug
             console.log('Số lượng bomb hiện tại sau khi xử lý:', this.bombs ? Object.keys(this.bombs).length : 0);
         };
-        
-        this.createExplosionEffect = function(x, y) {
+
+        this.createExplosionEffect = function (x, y) {
             // Create a smoke particle effect
             const smokeCloud = this.add.sprite(x, y, 'bomb_smoke');
             smokeCloud.setScale(0.1);
             smokeCloud.setAlpha(0.9);
             smokeCloud.setDepth(5); // Above players but below UI
-            
+
             // Create smoke animation
             this.tweens.add({
                 targets: smokeCloud,
@@ -244,9 +244,9 @@ class Scene extends Phaser.Scene {
                 }
             });
         };
-        
+
         // Handle remote bomb explosion
-        this.handleRemoteBombExplosion = function(data) {
+        this.handleRemoteBombExplosion = function (data) {
             const bomb = this.bombs ? this.bombs[data.bombId] : null;
             if (bomb && bomb.active) {
                 this.explodeBomb(bomb);
@@ -256,15 +256,15 @@ class Scene extends Phaser.Scene {
                 this.cameras.main.shake(200, 0.01);
             }
         };
-        
+
         // Add ability to handle a newly placed bomb from another player
-        this.handleRemoteBombPlaced = function(data) {
+        this.handleRemoteBombPlaced = function (data) {
             const bomb = this.placeBomb(data.x, data.y, data.ownerId);
             bomb.bombId = data.bombId; // Use the same ID sent by the owner
         };
 
         // Hàm xử lý khi một power-up được thu thập
-        this.collectPowerup = function(powerupId) {
+        this.collectPowerup = function (powerupId) {
             // Tìm power-up trong nhóm power-up
             this.powerups.getChildren().forEach((powerupSprite) => {
                 if (powerupSprite.powerupId === powerupId) {
@@ -307,7 +307,7 @@ class Scene extends Phaser.Scene {
             alive = true;
             canShoot = true;
             this.currentAmmo = 5;
-            
+
             let mapReceived = false;
 
             this.clearGameObjects();
@@ -322,24 +322,25 @@ class Scene extends Phaser.Scene {
             }
 
             console.log('[SYNC] Waiting for new map data...');
-            
+
             const mapTimeout = setTimeout(() => {
                 if (!mapReceived) {
+                    console.log('[SYNC] Map data timeout, requesting new map data');
                     socket.emit('resetMap');
                 }
             }, 3000);
 
             socket.off('prepareNewGame');
-            
+
             socket.on('prepareNewGame', (newData) => {
                 console.log('[SYNC] Received new map data:', newData);
-                
+
                 if (!mapReceived) {
                     clearTimeout(mapTimeout);
                     mapReceived = true;
-                    
+
                     mapper = newData.map;
-                    
+
                     this.boardData = newData.map;
                     this.playersData = newData.players;
 
@@ -451,17 +452,16 @@ class Scene extends Phaser.Scene {
             bulletSprite.bounces = 0;
             bulletSprite.maxBounces = 3;
 
-        
+
             const velocity = this.physics.velocityFromRotation(bullet.angle, 250);
             bulletSprite.setVelocity(velocity.x, velocity.y);
 
-        
+
             bulletSprite.body.useDamping = true;
-            bulletSprite.body.setDamping(false);
+            bulletSprite.body.setDamping(false)
 
             this.bulletSprites[bullet.id] = bulletSprite;
 
-        
             this.time.delayedCall(5000, () => {
                 if (bulletSprite && bulletSprite.active) {
                     bulletSprite.destroy();
@@ -474,7 +474,6 @@ class Scene extends Phaser.Scene {
             });
 
 
-        
             this.physics.add.collider(bulletSprite, this.walls, (bullet, wall) => {
                 killOwnerBullet[bullet.bulletId] = true;
                 let angle = Phaser.Math.Angle.Between(bullet.x, bullet.y, wall.x, wall.y);
@@ -489,16 +488,12 @@ class Scene extends Phaser.Scene {
                 });
             }, null, this);
 
-        
+
             for (const id in this.playerSprites) {
                 this.physics.add.overlap(bulletSprite, this.playerSprites[id], () => {
                     if (id !== bullet.ownerId) {
-                        console.log("[Socket-C] Nhảy điểm à ??? Player");
-                    
                         window.socketA.playerDied(id, bullet.ownerId);
                     } else if (id == bullet.ownerId && killOwnerBullet[bullet.id] === true) {
-                        console.log("[Socket-C] Nhảy điểm à ??? Owner");
-                    
                         window.socketA.playerDied(id, bullet.ownerId);
                     }
                 });
@@ -522,6 +517,7 @@ class Scene extends Phaser.Scene {
                 const playerData = this.playersData.find(p => p.id === playerId);
                 if (playerData) {
                     playerData.score = score;
+
                     try {
                         playerText.setText(`${playerData.name}: ${score}`);
                     } catch (error) {
@@ -536,15 +532,14 @@ class Scene extends Phaser.Scene {
 
         this.endGame = function (data) {
             this.clearGameObjects();
-            
+
             const winnerText = this.add.text(400, 300,
                 `Người chiến thắng: ${data.name}\nĐiểm số: ${data.score}`,
                 { fontSize: '24px', fill: '#fff', align: 'center' }
             );
             winnerText.setOrigin(0.5);
             winnerText.setDepth(10);
-            
-            
+
             this.texts.push(winnerText);
             this.waitingText = this.add.text(400, 300, 'Đang chờ kết nối...', {
                 fontSize: '24px',
@@ -577,12 +572,12 @@ class Scene extends Phaser.Scene {
                     this.playerSprites[playerId].destroy();
                     delete this.playerSprites[playerId];
                 }
-                
+
                 if (this.playerTexts && this.playerTexts[playerId]) {
                     this.playerTexts[playerId].destroy();
                     delete this.playerTexts[playerId];
                 }
-                
+
                 const playerData = this.playersData ? this.playersData.find(p => p.id === playerId) : null;
                 if (playerData) {
                     playerData.alive = false;
@@ -636,36 +631,36 @@ class Scene extends Phaser.Scene {
         this.gameInProgress = false;
         gameScene = this;
 
-    
+
         this.cameras.main.setBackgroundColor('#FFFFFF');
 
-    
+
         const mapSize = 680;
 
-    
+
         this.mapBorder = this.add.rectangle(mapSize / 2, mapSize / 2, mapSize, mapSize, 0x000000);
         this.mapBorder.setStrokeStyle(4, 0x000000);
         this.mapBorder.setDepth(0);
 
-    
+
         this.mapBackground = this.add.rectangle(mapSize / 2, mapSize / 2, mapSize - 4, mapSize - 4, 0xFFFFFF);
         this.mapBackground.setDepth(0);
 
-    
+
         this.walls = this.physics.add.staticGroup();
         this.powerups = this.physics.add.group();
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    
+
         this.waitingText = this.add.text(400, 300, 'Đang chờ kết nối...', {
             fontSize: '24px',
             fill: '#000000'
         }).setOrigin(0.5);
         this.waitingText.setDepth(10);
 
-    
+
         this.reloadText = this.add.text(
             this.cameras.main.width - 150,
             50,
@@ -685,14 +680,14 @@ class Scene extends Phaser.Scene {
             if (this.boardData && this.boardData.board) {
                 printBoard(this.boardData.board);
             }
-        
+
             if (this.playersData) {
                 this.playersData.forEach(player => {
                     const spawnPosition = getRandomPositionSafe(this, 100);
-                    
+
                     player.x = spawnPosition.x;
                     player.y = spawnPosition.y;
-                    
+
                     const playerSprite = this.physics.add.sprite(spawnPosition.x, spawnPosition.y, 'tank');
                     playerSprite.setScale(0.7);
                     playerSprite.setDepth(2);
@@ -738,7 +733,7 @@ class Scene extends Phaser.Scene {
                             this.physics.add.collider(playerSprite, this.playerSprites[id]);
                         }
                     }
-                
+
                     const playerText = this.add.text(
                         playerSprite.x,
                         playerSprite.y - 30,
@@ -753,21 +748,19 @@ class Scene extends Phaser.Scene {
                     if (player.id === socket.id) {
                         localPlayer = player;
                         console.log('Local player sprite created at:', playerSprite.x, playerSprite.y);
-                        
+
                         window.socketA.sendPlayerLocation(playerSprite.x, playerSprite.y, playerSprite.rotation);
                     }
                 });
             }
         };
 
-        // Thêm hàm xử lý powerup mới xuất hiện trên bản đồ
-        this.handleNewPowerup = function(powerup) {
+        this.handleNewPowerup = function (powerup) {
             console.log('Adding new powerup:', powerup);
-            
+
             let powerupSprite;
-            
-            // Chọn hình ảnh dựa trên loại power-up
-            switch(powerup.type) {
+
+            switch (powerup.type) {
                 case 'bomb':
                     powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_bomb');
                     break;
@@ -786,21 +779,19 @@ class Scene extends Phaser.Scene {
                 default:
                     powerupSprite = this.physics.add.sprite(powerup.x, powerup.y, 'powerup_gatling');
             }
-            
+
             powerupSprite.setScale(0.4);
             powerupSprite.setDepth(1);
             powerupSprite.powerupId = powerup.id;
             powerupSprite.powerupType = powerup.type;
-            
-            // Thêm hiệu ứng xoay
+
             this.tweens.add({
                 targets: powerupSprite,
                 rotation: { from: 0, to: Math.PI * 2 },
                 duration: 3000,
                 repeat: -1
             });
-            
-            // Thêm hiệu ứng nhảy lên xuống
+
             this.tweens.add({
                 targets: powerupSprite,
                 y: { from: powerup.y - 5, to: powerup.y + 5 },
@@ -808,15 +799,14 @@ class Scene extends Phaser.Scene {
                 yoyo: true,
                 repeat: -1
             });
-            
+
             this.powerups.add(powerupSprite);
-            
-            // Thêm collision detection với người chơi
+
             for (const id in this.playerSprites) {
                 const playerSprite = this.playerSprites[id];
                 this.physics.add.overlap(playerSprite, powerupSprite, () => {
                     console.log('Player collected powerup:', powerup.type);
-                    
+
                     // Chỉ người chơi hiện tại gửi thông báo thu thập powerup
                     if (id === socket.id) {
                         window.socketA.collectPowerup({
@@ -825,12 +815,12 @@ class Scene extends Phaser.Scene {
                             name: powerup.type.charAt(0).toUpperCase() + powerup.type.slice(1)
                         });
                     }
-                    
+
                     // Xóa powerup
                     powerupSprite.destroy();
                 });
             }
-            
+
             return powerupSprite;
         };
 
@@ -865,7 +855,7 @@ class Scene extends Phaser.Scene {
 
         const alivePlayers = Object.values(this.playerSprites).filter(sprite => sprite.active).length;
 
-        if(this.playersData.length == 1) {
+        if (this.playersData.length == 1) {
             console.log("now end one", this.playersData[0])
             this.endGame(this.playersData[0]);
             this.gameInProgress = false;
@@ -880,14 +870,14 @@ class Scene extends Phaser.Scene {
                 socket.emit('resetMap');
                 this.resetGame({ board: this.boardData, players: this.playersData });
                 resetInProgress = 2;
-            
+
                 setTimeout(() => {
                     resetInProgress = 0;
                 }, 1000);
             }, 5000);
         }
 
-    
+
         if (!alive) return;
 
         const playerSprite = this.playerSprites[socket.id];
@@ -922,7 +912,7 @@ class Scene extends Phaser.Scene {
         playerSprite.x = Phaser.Math.Clamp(playerSprite.x, tankSize / 2, mapSize - tankSize / 2);
         playerSprite.y = Phaser.Math.Clamp(playerSprite.y, tankSize / 2, mapSize - tankSize / 2);
 
-    
+
         window.socketA.sendPlayerLocation(playerSprite.x, playerSprite.y, playerSprite.rotation);
 
         if (moved) {
@@ -939,15 +929,15 @@ class Scene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey) && this.currentAmmo > 0 && this.canShoot) {
             this.canShoot = false;
             this.currentAmmo--;
-            
+
             // Kiểm tra xem người chơi có buff bomb không
             if (currentPowerup && currentPowerup.type === 'bomb') {
                 console.log('Đặt bomb thay vì bắn đạn!');
                 window.socketA.placeBomb(playerSprite.x, playerSprite.y);
-                
+
                 // Reset currentPowerup sau khi sử dụng
                 currentPowerup = null;
-                
+
                 // Xóa hiển thị powerup trên tank
                 if (playerSprite.powerupIcon) {
                     playerSprite.powerupIcon.destroy();
@@ -957,11 +947,11 @@ class Scene extends Phaser.Scene {
                 // Bắn đạn bình thường nếu không có buff bomb
                 window.socketA.fireBullet(playerSprite.x - 6.5, playerSprite.y, playerSprite.rotation, currentPowerup);
             }
-            
+
             this.time.delayedCall(200, () => { this.canShoot = true; });
         }
 
-    
+
         for (const id in this.playerSprites) {
             if (id !== socket.id) {
                 const playerText = this.playerTexts[id];
@@ -987,8 +977,8 @@ function initPhaserGame() {
 
     const config = new Phaser.Game({
         type: Phaser.AUTO,
-        width: 680, 
-        height: 680, 
+        width: 680,
+        height: 680,
         parent: 'phaser-game',
         physics: {
             default: 'arcade',
@@ -1045,7 +1035,7 @@ const createBoard = (self, board) => {
     }
 
     const mapSize = 680;
-    
+
     // Xử lý cấu trúc đa dạng của dữ liệu bản đồ
     if (board.walls && Array.isArray(board.walls)) {
         console.log(`[DEBUG] Creating walls from board.walls array with ${board.walls.length} walls`);
@@ -1053,7 +1043,7 @@ const createBoard = (self, board) => {
         for (let wall of board.walls) {
             if (!wall || typeof wall !== 'object') continue;
 
-            if (wall.x !== undefined && wall.y !== undefined && 
+            if (wall.x !== undefined && wall.y !== undefined &&
                 wall.width !== undefined && wall.height !== undefined) {
                 let tile;
                 if (wall.width > wall.height) {
@@ -1122,16 +1112,16 @@ const createBoard = (self, board) => {
         // Xử lý cấu trúc dữ liệu board.board - tạo tường từ dữ liệu lưới
         console.log(`[DEBUG] Creating walls from board.board with ${board.board.length} cells`);
         const tileSize = 68;
-        
+
         for (let cell of board.board) {
             if (!cell) continue;
-            
+
             const x = (cell.col - 1) * tileSize;
             const y = (cell.row - 1) * tileSize;
-            
+
             if (cell.top) {
                 let tile = self.physics.add.staticSprite(
-                    x + tileSize/2,
+                    x + tileSize / 2,
                     y,
                     "wall_x"
                 );
@@ -1143,11 +1133,11 @@ const createBoard = (self, board) => {
                 tile.setDepth(1);
                 self.walls.add(tile);
             }
-            
+
             if (cell.left) {
                 let tile = self.physics.add.staticSprite(
                     x,
-                    y + tileSize/2,
+                    y + tileSize / 2,
                     "wall_y"
                 );
                 tile.displayWidth = 4;
@@ -1158,11 +1148,11 @@ const createBoard = (self, board) => {
                 tile.setDepth(1);
                 self.walls.add(tile);
             }
-            
+
             // Bức tường phía dưới của hàng cuối cùng
             if (cell.row === 10 && cell.bottom) {
                 let tile = self.physics.add.staticSprite(
-                    x + tileSize/2,
+                    x + tileSize / 2,
                     y + tileSize,
                     "wall_x"
                 );
@@ -1174,12 +1164,12 @@ const createBoard = (self, board) => {
                 tile.setDepth(1);
                 self.walls.add(tile);
             }
-            
+
             // Bức tường bên phải của cột cuối cùng
             if (cell.col === 10 && cell.right) {
                 let tile = self.physics.add.staticSprite(
                     x + tileSize,
-                    y + tileSize/2,
+                    y + tileSize / 2,
                     "wall_y"
                 );
                 tile.displayWidth = 4;
@@ -1198,13 +1188,13 @@ const createBoard = (self, board) => {
 
     const wallsCount = self.walls.getChildren().length;
     console.log(`[DEBUG] Created ${wallsCount} wall tiles`);
-    
+
     // Nếu không có bức tường nào được tạo, coi như có lỗi
     if (wallsCount === 0) {
         console.error('[ERROR] No walls were created!');
         return false;
     }
-    
+
     self.cameras.main.centerOn(mapSize / 2, mapSize / 2);
     return true;
 };
@@ -1301,7 +1291,7 @@ socket.on('gameStart', (data) => {
 
     if (!data.board) {
         console.error('No board data in gameStart event:', data);
-    
+
         data.board = [];
     } else {
         console.log('Board data type:', typeof data.board);
@@ -1309,7 +1299,7 @@ socket.on('gameStart', (data) => {
         console.log('Board data length in gameStart:',
             Array.isArray(data.board) ? data.board.length : 'not an array');
 
-    
+
         if (Array.isArray(data.board) && data.board.length > 0) {
             console.log('Sample board tile:', data.board[0]);
         }
@@ -1341,8 +1331,8 @@ socket.on('playerDied', (data) => {
         gameScene.fireKey.isDown = false;
         gameScene.enterSpectateMode();
 
-    
-    
+
+
         if (gameScene.playerSprites[data.victimId]) {
             gameScene.playerSprites[data.victimId].destroy();
             delete gameScene.playerSprites[data.victimId];
@@ -1357,24 +1347,24 @@ socket.on('playerDied', (data) => {
 
 socket.on('drawBoard', (board) => {
     console.log('[SYNC] Received drawBoard event:', new Date().toISOString());
-    
+
     if (window.game && window.game.scene.scenes[0]) {
         // Lưu dữ liệu bản đồ vào game scene
         window.game.scene.scenes[0].boardData = board;
-        
+
         try {
             // Xóa bản đồ cũ nếu có
             if (window.game.scene.scenes[0].walls) {
                 window.game.scene.scenes[0].walls.clear(true, true);
             }
-            
+
             // Tạo bản đồ mới từ dữ liệu nhận được
             createBoard(window.game.scene.scenes[0], board);
-            
+
             // Căn giữa camera
             const mapSize = 680;
             window.game.scene.scenes[0].cameras.main.centerOn(mapSize / 2, mapSize / 2);
-            
+
             console.log('[SYNC] Map successfully created from drawBoard event');
         } catch (error) {
             console.error('[SYNC] Error creating board from drawBoard event:', error);
@@ -1434,7 +1424,7 @@ socket.on('bombExploded', (data) => {
 
 socket.on('processBombExplosion', (data) => {
     console.log('Nhận lệnh processBombExplosion từ server:', data);
-    
+
     // Đảm bảo rằng tất cả client xử lý vụ nổ cùng một lúc, thay vì dựa vào client phát hiện va chạm với bomb
     if (window.game && window.game.scene && window.game.scene.scenes[0]) {
         window.game.scene.scenes[0].processBombExplosion(data);
@@ -1448,13 +1438,13 @@ socket.on('newPowerup', (powerup) => {
 
 function getRandomPositionSafe(self, maxAttempts = 20) {
     console.log('[SAFE SPAWN] Tìm vị trí an toàn để spawn player...');
-    
+
     // Kích thước bản đồ và an toàn
     const mapSize = 680;
     const safeMargin = 50; // Margin an toàn từ rìa bản đồ
     const tankSize = 24;   // Kích thước xe tăng
     const safeZoneSize = 40; // Khoảng cách an toàn từ tường
-    
+
     // Các vị trí spawn cố định ở 4 góc, được đảm bảo an toàn
     const safeCorners = [
         { x: 100, y: 100 },
@@ -1462,51 +1452,51 @@ function getRandomPositionSafe(self, maxAttempts = 20) {
         { x: 100, y: mapSize - 100 },
         { x: mapSize - 100, y: mapSize - 100 }
     ];
-    
+
     // Trước tiên thử tìm vị trí ngẫu nhiên an toàn
     let position;
     let attempt = 0;
     let safePosition = false;
-    
+
     do {
         attempt++;
-        
+
         // Sinh vị trí ngẫu nhiên, tránh xa rìa bản đồ
         position = {
-            x: Phaser.Math.Between(safeMargin, mapSize - safeMargin), 
+            x: Phaser.Math.Between(safeMargin, mapSize - safeMargin),
             y: Phaser.Math.Between(safeMargin, mapSize - safeMargin)
         };
-        
+
         // Tạo sprite tạm thời để kiểm tra va chạm
         const tempSprite = self.physics.add.sprite(position.x, position.y, 'tank');
         tempSprite.setScale(0.7);
-        
+
         // Thiết lập hitbox phù hợp với xe tăng
         const hitboxWidth = Math.floor(tempSprite.width * 0.8);
         const hitboxHeight = Math.floor(tempSprite.height * 0.8);
         tempSprite.body.setSize(hitboxWidth, hitboxHeight, true);
-        
+
         // Kiểm tra overlap với tường, dùng phương pháp cải tiến hơn
         let isOverlapping = false;
-        
+
         // Kiểm tra va chạm với tất cả các tường
         if (self.walls) {
             self.walls.getChildren().forEach(wall => {
                 // Tính khoảng cách từ tâm vị trí đến tâm tường
                 const dx = Math.abs(position.x - wall.x);
                 const dy = Math.abs(position.y - wall.y);
-                
+
                 // Tổng kích thước hitbox (xe tăng + tường + vùng an toàn)
                 const combinedWidth = (hitboxWidth / 2) + (wall.width / 2) + safeZoneSize;
                 const combinedHeight = (hitboxHeight / 2) + (wall.height / 2) + safeZoneSize;
-                
+
                 // Kiểm tra va chạm "mở rộng" (bao gồm vùng an toàn)
                 if (dx < combinedWidth && dy < combinedHeight) {
                     isOverlapping = true;
                 }
             });
         }
-        
+
         // Kiểm tra overlap với các player khác
         let overlapsWithPlayer = false;
         for (const id in self.playerSprites) {
@@ -1515,26 +1505,26 @@ function getRandomPositionSafe(self, maxAttempts = 20) {
                 break;
             }
         }
-        
+
         // Vị trí an toàn khi không bị chồng lấp với tường hoặc player khác
         safePosition = !isOverlapping && !overlapsWithPlayer;
-        
+
         // Hủy sprite tạm
         tempSprite.destroy();
-        
+
         // Log debug
         if (attempt % 5 === 0) {
             console.log(`[SAFE SPAWN] Đã thử ${attempt} vị trí, tiếp tục tìm kiếm...`);
         }
-        
+
     } while (!safePosition && attempt < maxAttempts);
-    
+
     // Nếu không tìm được vị trí an toàn sau nhiều lần thử, sử dụng một trong các vị trí cố định
     if (!safePosition) {
         console.log(`[SAFE SPAWN] Không tìm thấy vị trí ngẫu nhiên an toàn sau ${maxAttempts} lần thử. Sử dụng vị trí cố định.`);
         return safeCorners[Math.floor(Math.random() * safeCorners.length)];
     }
-    
+
     console.log(`[SAFE SPAWN] Tìm thấy vị trí an toàn sau ${attempt} lần thử: (${position.x}, ${position.y})`);
     return position;
 }
@@ -1560,6 +1550,10 @@ function printBoard(board) { //in toàn bộ bảng
     }
     console.log(output);
 }
+
+window.addEventListener('error', function (e) {
+    console.error('JavaScript error:', e.message, 'at', e.filename, 'line', e.lineno);
+});
 
 window.renderBullet = function (bullet) {
     window.gameC.renderBullet(bullet);

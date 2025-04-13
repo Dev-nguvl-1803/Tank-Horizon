@@ -12,7 +12,6 @@
 </head>
 
 <body>
-    <!-- Test thu thong bao va moi loai -->
     <div class="container" id="menu">
         <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
         <button class="button" id="play-btn">Chơi</button>
@@ -21,40 +20,14 @@
             <img src="../Source/finally.png" id="close-settings" class="close-btn" alt="Close">
             <h3>Cài đặt</h3>
             <label>
-                Cài đặt nút bấm:
                 <h4>Âm Lượng: <input type="range" min="0" max="100" value="0" id="sound-volume"></h4>
             </label>
         </div>
         <button class="button" id="btnCredit">Nhà sáng tạo</button>
-        <div class="leaderboardbox">
-            <h2>Bảng xếp hạng</h2>
-            <table>
-                <tr>
-                    <th>Tên</th>
-                    <th>Điểm</th>
-                </tr>
-                <tr>
-                    <td>1. alterGolden</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>2. Foob</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>3. XD</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>4. Mika Glazer</td>
-                    <td>N/A</td>
-                </tr>
-                <tr>
-                    <td>5. Sigmarium</td>
-                    <td>N/A</td>
-                </tr>
-            </table>
+        <div class="lich-su">
+            <button class="button" id="btnHistory">Tìm lịch sử đấu</button>
         </div>
+        <div id="device-id-display">Fingerprint: <span id="device-id"></span></div>
     </div>
 
     <div id="Credit-window" class="Credit-window hidden">
@@ -122,14 +95,16 @@
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box1">×</div>
                     <div class="player-formal1">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar1" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar1" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-1"></div>
                     </div>
                 </div>
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box2">×</div>
                     <div class="player-formal2">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar2" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar2" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-2"></div>
                     </div>
                     <div class="player-number" id="player-2"></div>
@@ -137,7 +112,8 @@
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box3">×</div>
                     <div class="player-formal3">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar3" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar3" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-3"></div>
                     </div>
                     <div class="player-number" id="player-3"></div>
@@ -145,7 +121,8 @@
                 <div class="player-box">
                     <div class="kick-btn" title="Đuổi người chơi" id="player-box4">×</div>
                     <div class="player-formal4">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar4" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar4" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-4"></div>
                     </div>
                     <div class="player-number" id="player-4"></div>
@@ -164,27 +141,31 @@
             <div class="player-container">
                 <div class="player-box">
                     <div class="player-formal11">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar11" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar11" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-11"></div>
                     </div>
                 </div>
                 <div class="player-box">
                     <div class="player-formal22">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar22" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar22" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-22"></div>
                     </div>
                     <div class="player-number" id="player-22"></div>
                 </div>
                 <div class="player-box">
                     <div class="player-formal33">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar33" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar33" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-33"></div>
                     </div>
                     <div class="player-number" id="player-33"></div>
                 </div>
                 <div class="player-box">
                     <div class="player-formal44">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="player-avatar" id="player-avatar44" style="width: 130px; height: 150px;">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                            class="player-avatar" id="player-avatar44" style="width: 130px; height: 150px;">
                         <div class="player-number" id="player-44"></div>
                     </div>
                     <div class="player-number" id="player-44"></div>
@@ -193,6 +174,30 @@
             </div>
             <div class="start-text" id="player">Vui lòng chờ chủ phòng bắt đầu ...</div>
             <div class="room-code">Mã phòng: <span class="roomId"></span></div>
+        </div>
+    </div>
+
+    <div id="History-window" class="History-window hidden">
+        <img src="../Source/finally.png" id="close-History" class="close-btn" alt="Close">
+        <div class="center-history">
+            <img src="../Source/tank.png" class="logo-history" alt="Tank Horizon">
+            <div class="history-frame">
+                <div class="search-bar">
+                    <img src="../Source/Search.png" alt="Search Icon" />
+                    <input type="text" placeholder="Tìm kiếm tên.... và ENTER" required pattern="[^\s]+" title="Không được chứa khoảng trống"/>
+                </div>
+                <div class="history-header">
+                    <div>Thiết bị</div>
+                    <div>Người dùng</div>
+                    <div>K/D</div>
+                    <div>Màn</div>
+                    <div>Trạng thái</div>
+                    <div>Thời gian</div>
+                </div>
+                <div class="history-content">
+
+                </div>
+            </div>
         </div>
     </div>
 
@@ -208,7 +213,7 @@
         <div id="windowTaoPhong" class="TaoPhong">
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
-            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="15" required>
+            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
             <button id="newGame">Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
@@ -218,8 +223,8 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 Mã phòng:
             </div>
-            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="15" required>
-            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required>
+            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
             <div id="btnContain">
                 <button id="joinGame">Tự động tham gia</button>
                 <button id="btnJoinroom">Tham gia ngay</button>
@@ -228,7 +233,7 @@
         <div id="windowKhanGia" class="TaoPhong">
             <h2>Chế độ khán giả</h2>
             <div id="KhanGia">Mã phòng:</div>
-            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required>
+            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
             <button id="spectateGame">Xem ngay</button>
         </div>
     </div>

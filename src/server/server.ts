@@ -8,9 +8,9 @@ import { Powerup } from '../models/Powerup';
 import { Room } from '../models/Room';
 import dbConfig from './dbconfig';
 import { generateId } from './map';
-import playerRoutes from './routes/player';
 import matchesRoutes from './routes/matches';
 import matchResultRoutes from './routes/matchResult';
+import playerRoutes from './routes/player';
 
 declare global {
   var explodedBombs: Set<string>;
@@ -22,6 +22,8 @@ declare global {
  * - Create a new Express server
  * - Serve static files from the public folder
  * - Connect to SQL
+ * - FingerprintJS
+ * - Socket.io
  */
 
 //EXPRESS ===========================================================
@@ -29,6 +31,8 @@ declare global {
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
+const playerInfo = new Map<string, any>();
+
 
 // Add middleware for parsing JSON requests
 app.use(express.json());
@@ -51,7 +55,7 @@ app.use('/js', express.static(path.join(publicPath, 'js'), {
 }));
 app.use('/', express.static(path.join(publicPath, 'html'), {
   setHeaders: (res, filePath) => {
-    if (path.extname(filePath) === '.css') 
+    if (path.extname(filePath) === '.css')
       res.setHeader('Content-Type', 'text/css');
   }
 }));
@@ -68,7 +72,7 @@ server.listen(8080, () => {
 
 
 //SQL ===========================================================
-const playerDbs = new Map();
+const antiDup = new Map();
 let pool: sql.ConnectionPool;
 
 async function initializeDb() {
@@ -80,8 +84,6 @@ async function initializeDb() {
   }
 }
 initializeDb();
-
-
 
 // Nối mạng 🙏
 /**
@@ -96,7 +98,7 @@ initializeDb();
 const globalSettings = {
   maxPlayers: 4,
   maxBullets: 5,
-  pointsToWin: 1000,
+  pointsToWin: 200,
 };
 
 const roomIds: string[] = []; // Lưu trữ id của các phòng chơi
@@ -122,38 +124,51 @@ const getRoom = (id: string, isRoomId: boolean): string | undefined => {
   return roomId;
 };
 
-// Tên không trùng nhau
-// const checkPlayerNameExists = async (name: string): Promise<boolean> => {
-//   try {
-//     const result = await pool.request()
-//       .input('name', sql.NVarChar, name)
-//       .query('SELECT COUNT(*) as count FROM Players WHERE PlayerName = @name');
-
-//     return result.recordset[0].count > 0;
-//   } catch (err) {
-//     console.error('Error checking player name:', err);
-//     return false;
-//   }
-// };
-
-// Lưu score
-// const savePlayerScore = async (name: string, score: number) => {
-//   try {
-//     await pool.request()
-//       .input('name', sql.NVarChar, name)
-//       .input('score', sql.Int, score)
-//       .query(`
-
-//       `);
-//   } catch (err) {
-//     console.error('Error saving player score:', err);
-//   }
-// };
-
-
 
 io.on('connection', (socket) => {
   // ROOM SOCKET EVENTS ===========================================================
+
+  const wipRoom = (data: { name: string }) => {
+    let result: { inRoom: boolean, roomId?: string } = { inRoom: false, roomId: undefined };
+
+    Object.keys(rooms).forEach(key => {
+      for (const player of rooms[key].players) {
+        if (data.name.toLowerCase() === player.name.toLowerCase()) {
+          result = { inRoom: true, roomId: key };
+          return;
+        }
+      }
+    });
+    const playerStatus = result;
+
+    console.log("Tại sao?")
+    if (playerStatus.inRoom) {
+      console.log("Tại sao 1?")
+      socket.emit('playerAlreadyInRoom', {
+        inRoom: true,
+        roomId: playerStatus.roomId,
+        message: `Người chơi "${data.name}" đang trong trận`
+      });
+    } else {
+      console.log("Tại sao 2?")
+      socket.emit('playerAlreadyInRoom', {
+        inRoom: false,
+        roomId: null,
+        message: `OK`
+      });
+    }
+    socket.off('wipRoom', wipRoom);
+  }
+
+  const regTheDevice = (data: { name: string, device: string, os: string }) => {
+    if (data) {
+      const playerInput = playerInfo.get(data.name);
+      if (!playerInput) {
+        playerInfo.set(data.name, data.device);
+      }
+    }
+    socket.off('regTheDevice', regTheDevice);
+  }
 
   const autoJoin = (data: { name: string; }) => {
     // Ngẫu nhiên chọn room từ rooms kiểm tra điều kiện sau:
@@ -175,7 +190,7 @@ io.on('connection', (socket) => {
 
     randomRoom.newPlayer(socket.id, data.name);
     const playerIndex = randomRoom.getPlayerIndex(socket.id);
-    
+
     socket.join(roomId);
     socket.to(roomId).emit('playerJoined', {
       player: rooms[roomId].players[playerIndex],
@@ -186,7 +201,8 @@ io.on('connection', (socket) => {
       roomId: roomId,
       players: rooms[roomId].players,
       isHost: false,
-      maxPlayers: globalSettings.maxPlayers
+      maxPlayers: globalSettings.maxPlayers,
+      playerName: data.name
     });
     socket.off('autoJoin', autoJoin);
   }
@@ -235,8 +251,7 @@ io.on('connection', (socket) => {
     }
     socket.off('kickPlayer', kickPlayer);
   }
-
-  const socketNewGame = (data: any) => {
+  const socketNewGame = async (data: any) => {
     /**
      * Goal:
      * - Tạo mới phòng chơi
@@ -247,9 +262,27 @@ io.on('connection', (socket) => {
      */
 
     const gameType = "null"
-    const id = generateId(roomIds);
-    rooms[id] = new Room(id, io, socket, globalSettings, gameType);
+    var id = generateId(roomIds);
+    try {
+      let isDuplicateId = true;
+      while (isDuplicateId) {
+        const result = await pool.request()
+          .input('roomId', sql.NVarChar(6), id)
+          .query('SELECT * FROM Matchs WHERE MatchID = @roomId');
 
+        if (result.recordset.length > 0) {
+          console.log(`Room ID ${id} already exists in database, generating new one`);
+          id = generateId(roomIds);
+        } else {
+          isDuplicateId = false;
+          console.log(`Generated unique Room ID: ${id}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error checking room ID in database:', err);
+    }
+
+    rooms[id] = new Room(id, io, socket, globalSettings, gameType);
     rooms[id].newPlayer(socket.id, data.name);
     const playerIndex = rooms[id].getPlayerIndex(socket.id);
     if (playerIndex !== -1) {
@@ -263,7 +296,8 @@ io.on('connection', (socket) => {
       roomId: id,
       players: rooms[id].players,
       isHost: true,
-      maxPlayers: globalSettings.maxPlayers
+      maxPlayers: globalSettings.maxPlayers,
+      playerName: data.name
     });
     socket.off('newGame', socketNewGame);
   }
@@ -298,7 +332,8 @@ io.on('connection', (socket) => {
       roomId: data.id,
       players: rooms[data.id].players,
       isHost: false,
-      maxPlayers: globalSettings.maxPlayers
+      maxPlayers: globalSettings.maxPlayers,
+      playerName: data.name
     });
 
     socket.off('joinGame', socketJoinGame);
@@ -388,6 +423,7 @@ io.on('connection', (socket) => {
 
     io.to(roomId).emit('drawBoard', rooms[roomId].map);
 
+    rooms[roomId].startTime = new Date();
     io.to(roomId).emit('gameStart', {
       board: rooms[roomId].map,
       players: rooms[roomId].players
@@ -413,11 +449,6 @@ io.on('connection', (socket) => {
 
     const player = rooms[roomId].players[playerIndex];
 
-    if (rooms[roomId].gameInProgress && player.score > 0) {
-
-    }
-
-    console.log("Đã leave room", player.name, player.id, rooms[roomId].id)
     socket.to(roomId).emit('playerLeft', {
       id: socket.id,
       name: player.name,
@@ -427,6 +458,7 @@ io.on('connection', (socket) => {
 
     socket.leave(roomId);
     rooms[roomId].players.splice(playerIndex, 1);
+    playerInfo.delete(player.name);
 
     if (player.isHost && rooms[roomId].players.length > 0) {
       const newHostIndex = 0;
@@ -478,6 +510,7 @@ io.on('connection', (socket) => {
       playerCount: rooms[roomId].players.length - 1
     });
 
+    playerInfo.delete(player.name);
 
     rooms[roomId].players.splice(playerIndex, 1);
 
@@ -586,7 +619,7 @@ io.on('connection', (socket) => {
     socket.off('bulletDestroyed', socketBulletDestroyed);
   }
 
-  const socketPlayerDied = (data: any) => {
+  const socketPlayerDied = async (data: any) => {
     const roomId = getRoom(socket.id, false);
     if (!roomId) return;
 
@@ -595,46 +628,63 @@ io.on('connection', (socket) => {
 
     if (victimIndex === -1) return;
 
-    const datas = playerDbs.get(roomId + rooms[roomId].round);
-    const clearDatas = playerDbs.get(roomId + (rooms[roomId].round - 1));
-    if (clearDatas) playerDbs.delete(roomId + (rooms[roomId].round - 1));
+    const datas = antiDup.get(roomId + rooms[roomId].round);
+    const clearDatas = antiDup.get(roomId + (rooms[roomId].round - 1));
+    if (clearDatas) antiDup.delete(roomId + (rooms[roomId].round - 1));
 
     if (datas) {
       const killed = datas.find((i: any) => i == data.victimId);
       if (killed) return;
       else {
-        playerDbs.set(roomId + rooms[roomId].round, [...datas, data.victimId]);
+        antiDup.set(roomId + rooms[roomId].round, [...datas, data.victimId]);
       }
     } else {
-      playerDbs.set(roomId + rooms[roomId].round, [data.victimId]);
+      antiDup.set(roomId + rooms[roomId].round, [data.victimId]);
     }
 
-    console.log("Nhảy điểm không", data.killerId)
-
     rooms[roomId].players[victimIndex].alive = false;
+    rooms[roomId].players[victimIndex].death++;
     if (killerIndex !== -1) {
       if (data.victimId === data.killerId) {
-
         if (rooms[roomId].players[killerIndex].score == 0) {
           rooms[roomId].players[killerIndex].score = 0;
         } else {
           rooms[roomId].players[killerIndex].score -= 50;
         }
+        rooms[roomId].players[killerIndex].death++;
       } else {
-
+        rooms[roomId].players[killerIndex].kill++;
         rooms[roomId].players[killerIndex].score += 100;
       }
-
 
       io.to(roomId).emit('scoreUpdated', {
         id: data.killerId,
         score: rooms[roomId].players[killerIndex].score
       });
 
-
       if (rooms[roomId].players[killerIndex].score >= globalSettings.pointsToWin) {
+        var roomPlayer = []
+        rooms[roomId].endTime = new Date();
+        rooms[roomId].gameInProgress = false;
+        for (const player of rooms[roomId].players) {
+          const deviceId = playerInfo.get(player.name)
+          if (deviceId) {
+            roomPlayer.push({
+              player: player.name,
+              device: deviceId
+            });
+          }
+        }
         io.to(roomId).emit('gameOver', {
-          winner: rooms[roomId].players[killerIndex]
+          winner: rooms[roomId].players[killerIndex],
+          putSQL: {
+            startTime: rooms[roomId].startTime,
+            endTime: new Date(),
+            match: roomId,
+            players: rooms[roomId].players,
+            round: rooms[roomId].round,
+            devices: roomPlayer
+          }
         });
       }
     }
@@ -733,6 +783,12 @@ io.on('connection', (socket) => {
   socket.on('getPowerup', (powerup) => {
     socketGetPowerup(powerup);
   });
+  socket.on('deviceConnect', (data) => {
+    regTheDevice(data);
+  })
+  socket.on('wipRoom', (data) => {
+    wipRoom(data);
+  })
   socket.on('kickPlayer', async (name) => await kickPlayer(name));
   socket.on('placeBomb', (data) => {
     /**

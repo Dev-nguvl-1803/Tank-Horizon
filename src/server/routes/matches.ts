@@ -4,71 +4,64 @@ import { pool } from '../server';
 
 const router = express.Router();
 
-// Create a new match with custom roomID as MatchID
 router.post('/', async (req, res) => {
   try {
-    const { roomId, playerId } = req.body;
+    const { roomId, playerId, startTime, endTime } = req.body;
     
     if (!roomId || !playerId) {
       res.status(400).json({ error: 'RoomID and PlayerID are required' });
     } else {
-        const startTime = new Date();
-        
-        // Insert match with roomId as MatchID and null endtime
-        const result = await pool.request()
-          .input('matchId', sql.NVarChar(6), roomId)
-          .input('playerId', sql.Int, playerId)
+          const result = await pool.request()
+          .input('matchId', sql.VarChar(255), roomId)
+          .input('playerId', sql.Int, parseInt(playerId))
           .input('startTime', sql.DateTime, startTime)
+          .input('endTime', sql.DateTime, endTime)
           .query(`
-            INSERT INTO Matches (MatchID, PlayerID, Starttime, Endtime) 
-            VALUES (@matchId, @playerId, @startTime, NULL);
+            INSERT INTO Matchs (MatchID, PlayerID, StartTime, EndTime) 
+            VALUES (@matchId, @playerId, @startTime, @endTime);
             SELECT @matchId AS matchId;
           `);
         
-        res.status(201).json({ 
+        res.status(201).json({
           message: 'Match created successfully',
           matchId: result.recordset[0].matchId,
           startTime
         });
     }
-    
   } catch (err) {
     console.error('Error creating match:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get match by roomId
 router.get('/:roomId', async (req, res) => {
   try {
     const { roomId } = req.params;
     
-    const result = await pool.request()
-      .input('roomId', sql.NVarChar(6), roomId)
-      .query('SELECT * FROM Matches WHERE MatchID = @roomId');
+  const result = await pool.request()
+      .input('roomId', sql.VarChar(255), roomId)
+      .query('SELECT * FROM Matchs WHERE MatchID = @roomId');
     
     if (result.recordset.length === 0) {
       res.status(404).json({ error: 'Match not found' });
     } else {
         res.json(result.recordset[0]);
     }
-    
   } catch (err) {
     console.error('Error getting match:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Update match endtime by roomId
+
 router.put('/:roomId', async (req, res) => {
   try {
     const { roomId } = req.params;
     const endTime = new Date();
-    
-    const result = await pool.request()
-      .input('roomId', sql.NVarChar(6), roomId)
+      const result = await pool.request()
+      .input('roomId', sql.VarChar(255), roomId)
       .input('endTime', sql.DateTime, endTime)
-      .query('UPDATE Matches SET Endtime = @endTime WHERE MatchID = @roomId');
+      .query('UPDATE Matchs SET EndTime = @endTime WHERE MatchID = @roomId');
     
     if (result.rowsAffected[0] === 0) {
       res.status(404).json({ error: 'Match not found' });
@@ -84,14 +77,12 @@ router.put('/:roomId', async (req, res) => {
   }
 });
 
-// Delete match by roomId
 router.delete('/:roomId', async (req, res) => {
   try {
     const { roomId } = req.params;
-    
-    const result = await pool.request()
-      .input('roomId', sql.NVarChar(6), roomId)
-      .query('DELETE FROM Matches WHERE MatchID = @roomId');
+      const result = await pool.request()
+      .input('roomId', sql.VarChar(255), roomId)
+      .query('DELETE FROM Matchs WHERE MatchID = @roomId');
     
     if (result.rowsAffected[0] === 0) {
       res.status(404).json({ error: 'Match not found' });
