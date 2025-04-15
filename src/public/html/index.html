@@ -7,11 +7,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Tank Horizon</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
     <link rel="icon" type="image/png" href="../Source/logo.png">
-    <title>Tank-Horizon - Socket Test</title>
 </head>
 
 <body>
+    <div id="intro">
+        <img src="../Source/Intro.png" alt="Devnguvl Studio Logo" class="intro" id="main-content" />
+    </div>
     <div class="container" id="menu">
         <img src="../Source/tank.png" alt="Tank Horizon Logo" class="logo">
         <button class="button" id="play-btn">Chơi</button>
@@ -184,7 +187,8 @@
             <div class="history-frame">
                 <div class="search-bar">
                     <img src="../Source/Search.png" alt="Search Icon" />
-                    <input type="text" placeholder="Tìm kiếm tên.... và ENTER" required pattern="[^\s]+" title="Không được chứa khoảng trống"/>
+                    <input type="text" placeholder="Tìm kiếm tên.... và ENTER" required pattern="[^\s]+"
+                        title="Không được chứa khoảng trống" />
                 </div>
                 <div class="history-header">
                     <div>Thiết bị</div>
@@ -201,6 +205,10 @@
         </div>
     </div>
 
+    <div id="ingame" style="display: none;">
+
+    </div>
+
     <audio id="background-music" loop autoplay>
         <source src="../Source/TD.mp3" type="audio/mpeg">
         Your browser does not support the audio tag.
@@ -213,7 +221,8 @@
         <div id="windowTaoPhong" class="TaoPhong">
             <h2>Tạo phòng chơi mới</h2>
             <div id="NhapTen">Tên người chơi:</div>
-            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
+            <input type="text" id="newName-create" placeholder="Nhập tên của bạn:" maxlength="10" required
+                pattern="[^\s]+" title="Không được chứa khoảng trống">
             <button id="newGame">Tạo phòng</button>
         </div>
         <div id="windowThamGiaPhong" class="TaoPhong">
@@ -223,8 +232,10 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 Mã phòng:
             </div>
-            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
-            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
+            <input type="text" id="joinName" placeholder="Nhập tên của bạn" maxlength="10" required pattern="[^\s]+"
+                title="Không được chứa khoảng trống">
+            <input type="text" id="joinId" placeholder="Nhập mã phòng" maxlength="10" required pattern="[^\s]+"
+                title="Không được chứa khoảng trống">
             <div id="btnContain">
                 <button id="joinGame">Tự động tham gia</button>
                 <button id="btnJoinroom">Tham gia ngay</button>
@@ -233,20 +244,55 @@
         <div id="windowKhanGia" class="TaoPhong">
             <h2>Chế độ khán giả</h2>
             <div id="KhanGia">Mã phòng:</div>
-            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required pattern="[^\s]+" title="Không được chứa khoảng trống">
+            <input type="text" id="joinId-Spectator" placeholder="Nhập mã phòng" maxlength="10" required
+                pattern="[^\s]+" title="Không được chứa khoảng trống">
             <button id="spectateGame">Xem ngay</button>
         </div>
     </div>
 
     <!-- Phaser Game Container - Hidden by default -->
     <div id="phaser-game-container" style="display: none;">
+        <div id="room-info">
+            <div>
+                <p>Players: <span id="playerCount">0</span></p>
+                <p>Đạn còn lại: <span id="bullet-count">5</span></p>
+                <p>Điểm số: <span id="score">0</span></p>
+            </div>
+        </div>
+
+        <div id="status-box">
+            <p>Boom có thể tiêu diệt chính bạn</p>
+        </div>
+
+        <div id="match-box">
+            <p>Màn chơi: <span id="round">0</span></p>
+        </div>
+
         <div id="phaser-game"></div>
-        <button id="back-to-menu" class="button">Trở về</button>
+
+        <div id="room-code-box">
+            <p>Mã phòng: <span class="roomId"></span></p>
+        </div>
+
+        <img src="../Source/finally.png" id="close-ingame" class="close-btn" alt="Close">
     </div>
+
+    <div id="winner-screen" style="display: none;">
+        <div id="winner-content">
+            <img src="../Source/ggez.jpg" id="lolez">
+            <h2 id="winner-name"></h2>
+            <p id="winner-score"></p>
+        </div>
+    </div>
+
+    <!-- <div id="ready-fight" style="display: none;">READY</div> -->
+
+    <audio id="win-sound" src="../Source/win.mp3"></audio>
 
     <script src="../js/script.js"></script>
     <!-- Script load theo thứ tự: Socket.IO, Phaser, Socket A, Socket C -->
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@4.0.0/lib/anime.iife.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@v3.88.2/dist/phaser.min.js"></script>
     <script src="../js/socket-a.js"></script>
     <script src="../js/socket-c.js"></script>

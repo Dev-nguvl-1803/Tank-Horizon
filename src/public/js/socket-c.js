@@ -27,6 +27,8 @@ let coutn = 0;
 let resetInProgress = 0;
 var killOwnerBullet = {}
 var mapper = null;
+const antiDup = new Map();
+let isSpectator = false;
 
 /**
  * PHASER GAME FR
@@ -57,6 +59,12 @@ class Scene extends Phaser.Scene {
         this.load.image('bomb_smoke', '/assets/buff/bomb_smoke.png');
         this.load.image('bomb', '/assets/buff/bomb.png');
 
+        // Load audio
+        this.load.audio('fire', '/assets/sound/fire.mp3');
+        this.load.audio('kill', '/assets/sound/kill.mp3');
+        this.load.audio('powerup', '/assets/sound/powerup.mp3');
+        this.load.audio('ingame', '/assets/sound/ingame.mp3');
+
         // Add bomb-specific functions
         this.placeBomb = function (x, y, ownerId) {
             console.log('Placing bomb at:', x, y);
@@ -73,13 +81,9 @@ class Scene extends Phaser.Scene {
             if (!this.bombs) this.bombs = {};
             this.bombs[bomb.bombId] = bomb;
 
-            // Create a safety timer (3 seconds)
             this.time.delayedCall(3000, () => {
                 if (bomb && bomb.active) {
                     bomb.isArmed = true;
-                    console.log('Bomb is now armed!');
-
-                    // Add a pulsing effect to indicate armed state
                     this.tweens.add({
                         targets: bomb,
                         scale: { from: 0.35, to: 0.45 },
@@ -88,15 +92,7 @@ class Scene extends Phaser.Scene {
                         repeat: -1
                     });
 
-                    // Add collision detection with players
                     this.setupBombTrigger(bomb);
-
-                    // Emit event to tell other clients the bomb is armed
-                    socket.emit('bombArmed', {
-                        bombId: bomb.bombId,
-                        x: bomb.x,
-                        y: bomb.y
-                    });
                 }
             });
 
@@ -115,6 +111,10 @@ class Scene extends Phaser.Scene {
                 this.physics.add.overlap(playerSprite, bomb.triggerArea, () => {
                     if (bomb && bomb.active && bomb.isArmed) {
                         this.explodeBomb(bomb);
+                        this.sound.play('kill', {
+                            volume: 0.5,
+                            loop: false
+                        });
                     }
                 });
             }
@@ -176,24 +176,17 @@ class Scene extends Phaser.Scene {
                 if (bomb && bomb.active) {
                     console.log('Đang xóa bomb:', bombData.bombId);
 
-                    // Dừng tất cả tweens trên bomb (hiệu ứng nhấp nháy, v.v.)
                     this.tweens.killTweensOf(bomb);
 
-                    // Xóa trigger area một cách an toàn
                     if (bomb.triggerArea) {
                         bomb.triggerArea.destroy();
                         bomb.triggerArea = null;
                     }
 
-                    // Xóa bomb sprite
                     bomb.destroy();
 
-                    // Quan trọng: Xóa bomb từ object cache của scene
                     delete this.bombs[bombData.bombId];
-
-                    console.log('Đã xóa bomb thành công:', bombData.bombId);
                 } else {
-                    // Tìm bomb trên bản đồ dựa vào tọa độ trong trường hợp ID không khớp
                     let foundBomb = false;
                     Object.keys(this.bombs).forEach(key => {
                         const b = this.bombs[key];
@@ -293,6 +286,7 @@ class Scene extends Phaser.Scene {
                 this.waitingText.destroy();
                 this.waitingText = null;
             }
+            antiDup.delete(data.roomId);
 
             this.clearGameObjects();
             this.createGameObjects();
@@ -301,14 +295,13 @@ class Scene extends Phaser.Scene {
             this.cameras.main.centerOn(mapSize / 2, mapSize / 2);
         };
 
-        this.resetGame = function (data) {
-            console.log('[SYNC] Resetting game with data:', data);
-
+        this.resetGame = function () {
             alive = true;
             canShoot = true;
             this.currentAmmo = 5;
 
             let mapReceived = false;
+            this.gameInProgress = true;
 
             this.clearGameObjects();
 
@@ -323,39 +316,34 @@ class Scene extends Phaser.Scene {
 
             console.log('[SYNC] Waiting for new map data...');
 
-            const mapTimeout = setTimeout(() => {
-                if (!mapReceived) {
-                    console.log('[SYNC] Map data timeout, requesting new map data');
-                    socket.emit('resetMap');
-                }
-            }, 3000);
-
             socket.off('prepareNewGame');
 
             socket.on('prepareNewGame', (newData) => {
                 console.log('[SYNC] Received new map data:', newData);
 
                 if (!mapReceived) {
-                    clearTimeout(mapTimeout);
                     mapReceived = true;
 
                     mapper = newData.map;
 
                     this.boardData = newData.map;
                     this.playersData = newData.players;
-
+                    
                     if (this.playersData) {
                         this.playersData.forEach(player => {
                             player.alive = true;
                             if (player.id === socket.id) {
-                                console.log('[SYNC] Reset game - Current player status set to alive');
+                                document.getElementById("round").innerText = newData.round;
+                                if (newData.round == 2) {
+                                    this.sound.play('ingame', {
+                                        volume: 0.3,
+                                        loop: true
+                                    });
+                                }
                                 localPlayer = player;
                             }
                         });
                     }
-
-                    // Không gọi createBoard cục bộ ở đây
-                    // Server sẽ emit sự kiện drawBoard để đồng bộ bản đồ giữa các client
                     this.createGameObjects();
                 }
             });
@@ -469,6 +457,7 @@ class Scene extends Phaser.Scene {
                     delete killOwnerBullet[bullet.id];
                     if (this.currentAmmo < 5) {
                         this.currentAmmo++;
+                        document.getElementById('bullet-count').innerText = this.currentAmmo;
                     }
                 }
             });
@@ -492,8 +481,16 @@ class Scene extends Phaser.Scene {
             for (const id in this.playerSprites) {
                 this.physics.add.overlap(bulletSprite, this.playerSprites[id], () => {
                     if (id !== bullet.ownerId) {
+                        this.sound.play('kill', {
+                            volume: 0.5,
+                            loop: false
+                        });
                         window.socketA.playerDied(id, bullet.ownerId);
                     } else if (id == bullet.ownerId && killOwnerBullet[bullet.id] === true) {
+                        this.sound.play('kill', {
+                            volume: 0.5,
+                            loop: false
+                        });
                         window.socketA.playerDied(id, bullet.ownerId);
                     }
                 });
@@ -517,8 +514,10 @@ class Scene extends Phaser.Scene {
                 const playerData = this.playersData.find(p => p.id === playerId);
                 if (playerData) {
                     playerData.score = score;
-
                     try {
+                        if (socket.id == playerId) {
+                            document.getElementById('score').innerText = score;
+                        }
                         playerText.setText(`${playerData.name}: ${score}`);
                     } catch (error) {
                         console.warn(`Error updating score text: ${error.message}`);
@@ -531,28 +530,16 @@ class Scene extends Phaser.Scene {
 
 
         this.endGame = function (data) {
-            this.clearGameObjects();
-
-            const winnerText = this.add.text(400, 300,
-                `Người chiến thắng: ${data.name}\nĐiểm số: ${data.score}`,
-                { fontSize: '24px', fill: '#fff', align: 'center' }
-            );
-            winnerText.setOrigin(0.5);
-            winnerText.setDepth(10);
-
-            this.texts.push(winnerText);
-            this.waitingText = this.add.text(400, 300, 'Đang chờ kết nối...', {
-                fontSize: '24px',
-                fill: '#000000'
-            }).setOrigin(0.5);
-            this.waitingText.setDepth(10);
+            this.clearGameObjects && this.clearGameObjects();
             this.gameInProgress = false;
-            this.playersData = this.playersData.map(player => {
-                player.score = 0
-                this.gameInProgress = false;
-                return player;
-            });
-            this.gameInProgress = false;
+            alive = false;
+            canShoot = false;
+            currentPowerup = null;
+            localPlayer = null;
+            this.playersData = [];
+            this.boardData = null;
+            this.bombs = {};
+            this.sound && this.sound.stopAll();
         };
 
 
@@ -564,7 +551,6 @@ class Scene extends Phaser.Scene {
                 this.texts.push(spectateText);
             }
         };
-
 
         this.removePlayer = function (playerId) {
             try {
@@ -675,8 +661,7 @@ class Scene extends Phaser.Scene {
             this.texts.forEach(text => text.destroy());
             this.texts = [];
 
-            // Không gọi createBoard ở đây, việc tạo bản đồ được xử lý thông qua event drawBoard
-            // Chỉ in thông tin bản đồ để debug
+            this.gameInProgress = true;
             if (this.boardData && this.boardData.board) {
                 printBoard(this.boardData.board);
             }
@@ -805,10 +790,12 @@ class Scene extends Phaser.Scene {
             for (const id in this.playerSprites) {
                 const playerSprite = this.playerSprites[id];
                 this.physics.add.overlap(playerSprite, powerupSprite, () => {
-                    console.log('Player collected powerup:', powerup.type);
 
-                    // Chỉ người chơi hiện tại gửi thông báo thu thập powerup
                     if (id === socket.id) {
+                        this.sound.play('powerup', {
+                            volume: 0.5,
+                            loop: false
+                        });
                         window.socketA.collectPowerup({
                             id: powerup.id,
                             type: powerup.type,
@@ -852,19 +839,20 @@ class Scene extends Phaser.Scene {
 
     update() {
         if (!this.gameInProgress) return;
+        if (isSpectator) return; // Khán giả không điều khiển được
 
         const alivePlayers = Object.values(this.playerSprites).filter(sprite => sprite.active).length;
-
         if (this.playersData.length == 1) {
-            console.log("now end one", this.playersData[0])
-            this.endGame(this.playersData[0]);
-            this.gameInProgress = false;
-            alert("Chỉ còn một người chơi, bạn đã thắng!");
+            const getDup = antiDup.get(this.playersData[0].roomId);
+            console.log("Ngăn dup", getDup);
+            if (!getDup) {
+                antiDup.set(this.playersData[0].roomId, 1)
+                this.gameInProgress = false;
+                socket.emit('forceEnd', { player: this.playersData });
+            }
         } else if ((alivePlayers === 1 || alivePlayers === 0) && this.gameInProgress && resetInProgress === 0 && this.playersData.length > 1) {
-            // Sửa đổi điều kiện để xử lý cả trường hợp tất cả người chơi cùng chết (alivePlayers === 0)
             console.log('Reset sequence initiated. Players alive:', alivePlayers);
             resetInProgress = 1;
-
             setTimeout(() => {
                 console.log('Game reset timer completed, resetting game...');
                 socket.emit('resetMap');
@@ -874,7 +862,7 @@ class Scene extends Phaser.Scene {
                 setTimeout(() => {
                     resetInProgress = 0;
                 }, 1000);
-            }, 5000);
+            }, 3000);
         }
 
 
@@ -927,9 +915,6 @@ class Scene extends Phaser.Scene {
 
         // Khi nhấn nút space (bắn)
         if (Phaser.Input.Keyboard.JustDown(this.fireKey) && this.currentAmmo > 0 && this.canShoot) {
-            this.canShoot = false;
-            this.currentAmmo--;
-
             // Kiểm tra xem người chơi có buff bomb không
             if (currentPowerup && currentPowerup.type === 'bomb') {
                 console.log('Đặt bomb thay vì bắn đạn!');
@@ -944,7 +929,13 @@ class Scene extends Phaser.Scene {
                     playerSprite.powerupIcon = null;
                 }
             } else {
-                // Bắn đạn bình thường nếu không có buff bomb
+                this.sound.play('fire', {
+                    volume: 0.5,
+                    loop: false
+                });
+                this.canShoot = false;
+                this.currentAmmo--;
+                document.getElementById('bullet-count').innerText = this.currentAmmo;
                 window.socketA.fireBullet(playerSprite.x - 6.5, playerSprite.y, playerSprite.rotation, currentPowerup);
             }
 
@@ -1020,7 +1011,7 @@ function initPhaserGame() {
  */
 
 const createBoard = (self, board) => {
-    console.log('[DEBUG] Creating board with data:', board);
+    console.log("Ai đó gọi bản đồ mới")
 
     if (!board || typeof board !== 'object') {
         console.error('[ERROR] Invalid board data');
@@ -1036,10 +1027,8 @@ const createBoard = (self, board) => {
 
     const mapSize = 680;
 
-    // Xử lý cấu trúc đa dạng của dữ liệu bản đồ
     if (board.walls && Array.isArray(board.walls)) {
         console.log(`[DEBUG] Creating walls from board.walls array with ${board.walls.length} walls`);
-        // Nếu có thuộc tính walls là mảng (cấu trúc phổ biến)
         for (let wall of board.walls) {
             if (!wall || typeof wall !== 'object') continue;
 
@@ -1294,12 +1283,6 @@ socket.on('gameStart', (data) => {
 
         data.board = [];
     } else {
-        console.log('Board data type:', typeof data.board);
-        console.log('Is board an array?', Array.isArray(data.board));
-        console.log('Board data length in gameStart:',
-            Array.isArray(data.board) ? data.board.length : 'not an array');
-
-
         if (Array.isArray(data.board) && data.board.length > 0) {
             console.log('Sample board tile:', data.board[0]);
         }
@@ -1309,17 +1292,19 @@ socket.on('gameStart', (data) => {
     alive = true;
     canShoot = true;
     window.gameC.initializeGame(data);
+    // if (data.reRun) {
+    //     window.resetGame(data);
+    // } else {
+    // }
 });
 
-socket.on('waitingRoom', (data) => {
-    console.log('Received waitingRoom event');
+socketRegistry.on('waitingRoom', (data) => {
     if (!gameInitialized) {
-        console.log('Initializing Phaser for waiting room');
         initPhaserGame();
     }
 });
 
-socket.on('playerDied', (data) => {
+socketRegistry.on('playerDied', (data) => {
     console.log('Player died event received:', data);
 
     if (data.victimId === socket.id) {
@@ -1330,8 +1315,6 @@ socket.on('playerDied', (data) => {
         gameScene.cursors.down.isDown = false;
         gameScene.fireKey.isDown = false;
         gameScene.enterSpectateMode();
-
-
 
         if (gameScene.playerSprites[data.victimId]) {
             gameScene.playerSprites[data.victimId].destroy();
@@ -1345,7 +1328,7 @@ socket.on('playerDied', (data) => {
     }
 });
 
-socket.on('drawBoard', (board) => {
+socketRegistry.on('drawBoard', (board) => {
     console.log('[SYNC] Received drawBoard event:', new Date().toISOString());
 
     if (window.game && window.game.scene.scenes[0]) {
@@ -1378,16 +1361,16 @@ socket.on('drawBoard', (board) => {
         pendingGameData.board = board;
     }
 });
-
 socket.on('playerLeft', (player) => {
     window.gameC.removePlayer(player.id);
-});
+})
 
-socket.on('resetGame', (data) => {
+socketRegistry.on('resetGame', (data) => {
     console.log('Reset event received - EXPLICITLY setting alive=true');
     alive = true;
     canShoot = true;
 
+    console.log("TỰ DO KÌA EREN", data);
 
     if (gameScene && gameScene.texts) {
         gameScene.texts = gameScene.texts.filter(text => {
@@ -1412,17 +1395,17 @@ socket.on('resetGame', (data) => {
     window.gameC.resetGame(data);
 });
 
-socket.on('bombPlaced', (data) => {
+socketRegistry.on('bombPlaced', (data) => {
     console.log('Bomb placed event received:', data);
     window.gameC.handleRemoteBombPlaced(data);
 });
 
-socket.on('bombExploded', (data) => {
+socketRegistry.on('bombExploded', (data) => {
     console.log('Bomb exploded event received:', data);
     window.gameC.handleRemoteBombExplosion(data);
 });
 
-socket.on('processBombExplosion', (data) => {
+socketRegistry.on('processBombExplosion', (data) => {
     console.log('Nhận lệnh processBombExplosion từ server:', data);
 
     // Đảm bảo rằng tất cả client xử lý vụ nổ cùng một lúc, thay vì dựa vào client phát hiện va chạm với bomb
@@ -1431,7 +1414,7 @@ socket.on('processBombExplosion', (data) => {
     }
 });
 
-socket.on('newPowerup', (powerup) => {
+socketRegistry.on('newPowerup', (powerup) => {
     console.log('New powerup event received:', powerup);
     window.gameC.handleNewPowerup(powerup);
 });
@@ -1529,11 +1512,11 @@ function getRandomPositionSafe(self, maxAttempts = 20) {
     return position;
 }
 
-function resetMap() {
-    socket.on('prepareNewGame', datas => {
-        mapper = datas.board;
-    })
-}
+// function resetMap() {
+//     socketRegistry.on('prepareNewGame', datas => {
+//         mapper = datas.board;
+//     })
+// }
 
 function printBoard(board) { //in toàn bộ bảng
     let output = '';
@@ -1579,6 +1562,9 @@ window.updatePowerup = function (playerId, powerup) {
 window.initializeGame = function (data) {
     window.gameC.initializeGame(data);
 };
+window.resetGame = function (data) {
+    window.gameC.resetGame(data);
+}
 window.placeBomb = function (x, y, ownerId) {
     return window.gameC.placeBomb(x, y, ownerId);
 };
@@ -1594,3 +1580,13 @@ window.handleNewPowerup = function (powerup) {
 window.collectPowerup = function (powerupId) {
     window.gameC.collectPowerup(powerupId);
 };
+
+socketRegistry.on('spectateGameInProgress', (data) => {
+    isSpectator = true;
+});
+socketRegistry.on('spectateWaitingRoom', (data) => {
+    isSpectator = true;
+});
+socketRegistry.on('spectateEnd', () => {
+    isSpectator = false;
+});

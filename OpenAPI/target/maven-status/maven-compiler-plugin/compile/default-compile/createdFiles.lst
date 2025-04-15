@@ -1,0 +1,12 @@
+openapi\routes\PlayerRoutes.class
+openapi\model\Match.class
+openapi\dao\PlayerDAO.class
+openapi\routes\MatchRoutes.class
+openapi\dao\MatchDAO.class
+openapi\dao\MatchResultDAO.class
+openapi\routes\MatchResultRoutes.class
+openapi\database\DatabaseConnection.class
+openapi\model\Player.class
+openapi\util\JsonUtil.class
+openapi\OpenAPI.class
+openapi\model\MatchResult.class

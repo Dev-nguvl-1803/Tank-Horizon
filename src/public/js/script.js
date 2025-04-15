@@ -23,12 +23,12 @@ function generateDeviceId() {
 function getDeviceId() {
     // Lấy ID từ localStorage hoặc tạo mới nếu chưa có
     let deviceId = localStorage.getItem('tank-horizon-device-id');
-    
+
     if (!deviceId) {
         deviceId = generateDeviceId();
         localStorage.setItem('tank-horizon-device-id', deviceId);
     }
-    
+
     return deviceId;
 }
 
@@ -37,11 +37,11 @@ function displayDeviceId() {
     const menuElement = document.getElementById('menu');
     const deviceIdDisplay = document.getElementById('device-id-display');
     const deviceIdSpan = document.getElementById('device-id');
-    
+
     if (menuElement && deviceIdDisplay) {
         // Chỉ hiển thị khi menu chính được hiển thị
         const isMenuVisible = window.getComputedStyle(menuElement).display !== 'none';
-        
+
         if (isMenuVisible) {
             deviceIdSpan.textContent = getDeviceId();
             deviceIdDisplay.style.display = 'block';
@@ -71,16 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hiển thị Device ID ban đầu
     displayDeviceId();
-    
+
     // Đảm bảo ID device được cập nhật khi chuyển đổi giữa các màn hình
     const playBtn = document.getElementById('play-btn');
     const closePlay = document.getElementById('close-play');
-    
+
     playBtn.addEventListener('click', () => {
         // Ẩn khi vào màn hình chọn phòng
         document.getElementById('device-id-display').style.display = 'none';
     });
-    
+
     closePlay.addEventListener('click', () => {
         // Hiện lại khi quay về màn hình chính
         document.getElementById('device-id-display').style.display = 'block';
@@ -129,12 +129,12 @@ function addRandomItems() {
     var item = document.createElement('img');
     item.src = images[Math.floor(Math.random() * images.length)];
     item.className = 'random-item';
-    
+
     // Giảm kích thước xe tăng xuống còn khoảng 30px
     const tankSize = 30;
     item.style.width = `${tankSize}px`;
     item.style.height = 'auto';
-    
+
     // Đảm bảo xe tăng luôn ở dưới các thành phần khác
     item.style.zIndex = "-10";
 
@@ -167,7 +167,7 @@ function addRandomItems() {
     var duration = 25 + Math.random() * 15; // 25-40s
     var uniqueId = new Date().getTime() + Math.random().toString(16).slice(2);
     var initialRotation = Math.random() * 360;
-    
+
     // Giảm tốc độ xoay để trông tự nhiên hơn
     var rotationAmount = (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360);
 
@@ -227,6 +227,14 @@ window.onload = function () {
     };
     testImage.src = '../Source/tank.png';
 };
+
+function showNotification(message) {
+    const noti = document.createElement('div');
+    noti.className = 'notification';
+    noti.textContent = message;
+    document.body.appendChild(noti);
+    setTimeout(() => noti.remove(), 3000);
+}
 
 // Hàm fallback nếu không tải được hình ảnh
 function addFallbackItems() {
@@ -301,7 +309,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     closeCreateRoomBtn.addEventListener("click", () => {
-        console.log("Close button clicked.");
         createRoomDiv.classList.add("hidden");
         document.getElementById("play").style.display = "block";
     });
@@ -352,6 +359,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const closeIngame = document.getElementById('close-ingame');
+    if(closeIngame) {
+        const joinRoomDiv = document.getElementById("Join-room");
+        const phaserDisplay = document.getElementById('phaser-game-container');
+
+        closeIngame.addEventListener("click", () => {
+            joinRoomDiv.classList.add("hidden");
+            phaserDisplay.style.display = "none";
+            document.getElementById("play").style.display = "block";
+            if (window.game && window.game.scene && window.game.scene.scenes[0] && window.game.scene.scenes[0].sound) {
+                window.game.scene.scenes[0].sound.stopAll();
+            }
+        })
+    }
+})
 
 //Warning missing id or incorrect on JoinRoom 1
 document.addEventListener("DOMContentLoaded", () => {
@@ -429,12 +453,25 @@ document.addEventListener("DOMContentLoaded", () => {
 // KICK PLAYER LÀ 2 CÁI DƯỚI CÙNG NÀY
 
 // Hiển thị notification (giữ nguyên)
-function showNotification(message) {
-    const noti = document.createElement('div');
-    noti.className = 'notification';
-    noti.textContent = message;
-    document.body.appendChild(noti);
-    setTimeout(() => noti.remove(), 3000);
+function showSuccess(message) {
+    const existingError = document.querySelector(".success-popup");
+    if (existingError) existingError.remove();
+
+    const successDiv = document.createElement("div");
+    successDiv.classList.add("success-popup");
+    successDiv.innerHTML = `
+        <div class="error-box">
+            <img src="../Source/check.png" class="error-icon"></div>
+            <div class="error-text">${message}</div>
+        </div>
+    `;
+    document.body.appendChild(successDiv);
+
+    setTimeout(() => successDiv.style.opacity = "1", 100);
+    setTimeout(() => {
+        successDiv.style.opacity = "0";
+        setTimeout(() => successDiv.remove(), 500);
+    }, 3000);
 }
 
 function showError(message) {
@@ -497,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function searchByUsername(username) {
 
-        fetch(`/api/matchResult/user/${encodeURIComponent(username)}`)
+        fetch(`/api/matchresult/user/${encodeURIComponent(username)}`)
             .then(response => {
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -531,18 +568,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const row = document.createElement('div');
                 row.classList.add('history-row');
                 // Function to convert date to relative time
-                function getRelativeTime(dateString) {
-                    const now = new Date();
-                    const past = new Date(dateString);
-                    const diff = Math.floor((now - past) / 1000); // difference in seconds
-                    
-                    if (diff < 60) return `${diff} giây trước`;
-                    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-                    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-                    if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
-                    if (diff < 31536000) return `${Math.floor(diff / 2592000)} tháng trước`;
-                    return `${Math.floor(diff / 31536000)} năm trước`;
-                }
+                // function getRelativeTime(dateString) {
+                //     console.log("Date String:", dateString, typeof(dateString));
+                //     const now = new Date();
+                //     const past = new Date(dateString)
+                //     const diff = Math.floor((now - past) / 1000); // difference in seconds
+
+                //     if (diff < 60) return `${diff} giây trước`;
+                //     if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+                //     if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+                //     if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
+                //     if (diff < 31536000) return `${Math.floor(diff / 2592000)} tháng trước`;
+                //     return `${Math.floor(diff / 31536000)} năm trước`;
+                // }
 
                 row.innerHTML = `
                     <div>${item.DeviceName}</div>
@@ -550,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>${item.KD} (${item.Score})</div>
                     <div>${item.NumRound}</div>
                     <div>${item.Statu}</div>
-                    <div>${getRelativeTime(item.CreateTime)}</div>
+                    <div>${new Date(item.CreateTime).toString().substring(0, 16)}</div>
                 `;
                 historyContent.appendChild(row);
             }
@@ -559,3 +597,21 @@ document.addEventListener('DOMContentLoaded', () => {
         historyWindow.classList.remove('hidden');
     }
 });
+
+window.onload = function () {
+    // Sau 4s: logo đã xong fade in/out, bắt đầu fade out intro container
+    setTimeout(() => {
+      const intro = document.getElementById("intro");
+      const main = document.getElementById("main-content");
+  
+      // Thêm lớp để intro fade out mượt
+      intro.classList.add("fade-out-intro");
+  
+      // Sau khi fade out xong (1s), ẩn intro và hiện main
+      setTimeout(() => {
+        intro.style.display = "none";
+        // main.style.display = "block";
+        main.classList.add("fade-in-intro");
+      }, 1000);
+    }, 4000); // 4s là thời gian logo animation
+  };

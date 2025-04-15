@@ -11,6 +11,7 @@ import { generateId } from './map';
 import matchesRoutes from './routes/matches';
 import matchResultRoutes from './routes/matchResult';
 import playerRoutes from './routes/player';
+import { Player } from '../models/Player';
 
 declare global {
   var explodedBombs: Set<string>;
@@ -41,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 // Setup API routes
 app.use('/api/player', playerRoutes);
 app.use('/api/matches', matchesRoutes);
-app.use('/api/matchResult', matchResultRoutes);
+app.use('/api/matchresult', matchResultRoutes);
 
 const publicPath = path.resolve(__dirname, '../../src/public');
 const htmlPath = path.join(publicPath, 'html');
@@ -98,7 +99,7 @@ initializeDb();
 const globalSettings = {
   maxPlayers: 4,
   maxBullets: 5,
-  pointsToWin: 200,
+  pointsToWin: 100,
 };
 
 const roomIds: string[] = []; // Lưu trữ id của các phòng chơi
@@ -106,28 +107,62 @@ const rooms: { [key: string]: Room } = {}; // Lưu trữ các phòng chơi
 
 
 // Tìm phòng chơi đang hoạt động ===============================
-const getRoom = (id: string, isRoomId: boolean): string | undefined => {
-  if (isRoomId) {
-    return rooms[id] ? id : undefined;
-  }
-
-  let roomId: string | undefined;
-  Object.keys(rooms).forEach(key => {
-    for (const player of rooms[key].players) {
-      if (id === player.id) {
-        roomId = key;
-        return;
-      }
-    }
-  });
-
-  return roomId;
-};
 
 
 io.on('connection', (socket) => {
   // ROOM SOCKET EVENTS ===========================================================
 
+  const getRoom = (id: string, isRoomId: boolean): string | undefined => {
+    if (isRoomId) {
+      if(rooms[id]) {
+        return id;
+      } else {
+        socket.emit('invalidRoomId', id);
+        return undefined;
+      }
+    }
+  
+    let roomId: string | undefined;
+    Object.keys(rooms).forEach(key => {
+      for (const player of rooms[key].players) {
+        if (id === player.id) {
+          roomId = key;
+          return;
+        }
+      }
+    });
+  
+    return roomId;
+  };
+
+  const forceEnd = (data: { player: Player[], room: string }) => {
+    var roomPlayer = []
+    rooms[data.player[0].roomId].endTime = new Date();
+    rooms[data.player[0].roomId].gameInProgress = false;
+    rooms[data.player[0].roomId].runningSoon = true;
+    for (const player of rooms[data.player[0].roomId].players) {
+      const deviceId = playerInfo.get(player.name)
+      if (deviceId) {
+        roomPlayer.push({
+          player: player.name,
+          device: deviceId
+        });
+      }
+    }
+    io.to(data.player[0].roomId).emit('gameOver', {
+      winner: data.player[0],
+      putSQL: {
+        startTime: rooms[data.player[0].roomId].startTime,
+        endTime: new Date(),
+        match: data.player[0].roomId,
+        players: rooms[data.player[0].roomId].players,
+        round: rooms[data.player[0].roomId].round,
+        devices: roomPlayer
+      }
+    });
+    rooms[data.player[0].roomId].resetAll();
+    socket.off('forceEnd', forceEnd);
+  }
   const wipRoom = (data: { name: string }) => {
     let result: { inRoom: boolean, roomId?: string } = { inRoom: false, roomId: undefined };
 
@@ -141,16 +176,13 @@ io.on('connection', (socket) => {
     });
     const playerStatus = result;
 
-    console.log("Tại sao?")
     if (playerStatus.inRoom) {
-      console.log("Tại sao 1?")
       socket.emit('playerAlreadyInRoom', {
         inRoom: true,
         roomId: playerStatus.roomId,
         message: `Người chơi "${data.name}" đang trong trận`
       });
     } else {
-      console.log("Tại sao 2?")
       socket.emit('playerAlreadyInRoom', {
         inRoom: false,
         roomId: null,
@@ -238,11 +270,12 @@ io.on('connection', (socket) => {
             id: player.id,
             name: player.name,
             playerCount: rooms[player.roomId].players.length,
-            room: rooms[player.roomId].id
+            room: rooms[player.roomId].id,
+            players: rooms[player.roomId].players
           });
         } else {
           client.emit('playerKick', {
-            message: `Không thể kick host`,
+            message: `Không thể đuổi chính mình`,
             room: rooms[player.roomId].id
           });
           return;
@@ -312,11 +345,16 @@ io.on('connection', (socket) => {
       * - Gửi thông tin phòng chơi cho người chơi mới
     */
 
+    console.log("Check join game", rooms[data.id])
     if (!rooms[data.id]) {
       socket.emit('invalidRoomId', data.id);
       return;
     }
-
+    // Đảm bảo emit roomFull đúng message
+    if (rooms[data.id].players.length >= globalSettings.maxPlayers) {
+      socket.emit('roomFull', 'Phòng đã đủ số lượng người chơi');
+      return;
+    }
     rooms[data.id].newPlayer(socket.id, data.name);
     const playerIndex = rooms[data.id].getPlayerIndex(socket.id);
 
@@ -402,7 +440,7 @@ io.on('connection', (socket) => {
     const roomId = getRoom(socket.id, false);
     if (!roomId) return;
 
-    if (rooms[roomId].gameInProgress == true) {
+    if (rooms[roomId].gameInProgress == true && rooms[roomId].runningSoon) {
       socket.emit('gameAlreadyStarted', 'Trận đấu đã bắt đầu rồi, không thể bắt đầu lại nữa');
       return;
     }
@@ -426,7 +464,8 @@ io.on('connection', (socket) => {
     rooms[roomId].startTime = new Date();
     io.to(roomId).emit('gameStart', {
       board: rooms[roomId].map,
-      players: rooms[roomId].players
+      players: rooms[roomId].players,
+      roomId: roomId,
     });
 
     console.log(`[Room ${roomId}] Bắt đầu spawner powerup sau khi trò chơi đã bắt đầu`);
@@ -453,7 +492,8 @@ io.on('connection', (socket) => {
       id: socket.id,
       name: player.name,
       playerCount: rooms[roomId].players.length - 1,
-      room: rooms[roomId].id
+      room: rooms[roomId].id,
+      players: rooms[roomId].players
     });
 
     socket.leave(roomId);
@@ -472,6 +512,8 @@ io.on('connection', (socket) => {
     }
 
     if (rooms[roomId].players.length === 0) {
+      // Thông báo cho tất cả socket còn lại (khán giả) về việc kết thúc spectate
+      io.to(roomId).emit('spectateEnd');
       delete rooms[roomId];
       const idIndex = roomIds.indexOf(roomId);
       if (idIndex !== -1) {
@@ -507,7 +549,8 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('playerLeft', {
       id: socket.id,
       name: player.name,
-      playerCount: rooms[roomId].players.length - 1
+      playerCount: rooms[roomId].players.length - 1,
+      players: rooms[player.roomId].players
     });
 
     playerInfo.delete(player.name);
@@ -528,6 +571,8 @@ io.on('connection', (socket) => {
 
 
     if (rooms[roomId].players.length === 0) {
+      // Thông báo cho tất cả socket còn lại (khán giả) về việc kết thúc spectate
+      io.to(roomId).emit('spectateEnd');
       delete rooms[roomId];
       const idIndex = roomIds.indexOf(roomId);
       if (idIndex !== -1) {
@@ -666,6 +711,7 @@ io.on('connection', (socket) => {
         var roomPlayer = []
         rooms[roomId].endTime = new Date();
         rooms[roomId].gameInProgress = false;
+        rooms[roomId].runningSoon = true;
         for (const player of rooms[roomId].players) {
           const deviceId = playerInfo.get(player.name)
           if (deviceId) {
@@ -686,6 +732,7 @@ io.on('connection', (socket) => {
             devices: roomPlayer
           }
         });
+        rooms[roomId].resetAll();
       }
     }
 
@@ -706,7 +753,7 @@ io.on('connection', (socket) => {
     const playerIndex = rooms[roomId].getPlayerIndex(socket.id);
     if (playerIndex === -1) return;
 
-    console.log(`[Server] Player ${socket.id} requested map reset for room ${roomId}`);
+    console.log(`[Server][MAPPER] Player ${socket.id} requested map reset for room ${roomId}`);
 
 
     if (!rooms[roomId].isResetting()) {
@@ -790,6 +837,9 @@ io.on('connection', (socket) => {
     wipRoom(data);
   })
   socket.on('kickPlayer', async (name) => await kickPlayer(name));
+  socket.on('forceEnd', (data) => {
+    forceEnd(data);
+  })
   socket.on('placeBomb', (data) => {
     /**
      * Goal:

@@ -48,10 +48,8 @@ socket.on('disconnect', () => {
 async function createNewGame() {
     const nameInput = document.getElementById('newName-create');
     const name = nameInput.value.trim();
-    var already = false;
 
     if (!name) {
-        alert('Vui lòng nhập tên của bạn!');
         return;
     }
 
@@ -61,7 +59,7 @@ async function createNewGame() {
             showError(`<b>Không thể tham gia!</b><br>${data.message}`);
         } else {
             playerName = name;
-            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(playerName)}`, {
+            await fetch(`http://100.114.16.81:8008/api/player/${encodeURIComponent(playerName)}`, {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,7 +68,7 @@ async function createNewGame() {
                 if (!response.ok) {
                     if (response.status == 404) {
                         console.log(response)
-                        await fetch('http://localhost:8080/api/player', {
+                        await fetch('http://100.114.16.81:8008/api/player', {
                             method: "POST",
                             headers: {
                                 'Content-Type': 'application/json',
@@ -104,15 +102,17 @@ function joinExistingGame() {
         if (data.message.includes(name)) {
             showError(`<b>Không thể tham gia!</b><br>${data.message}`);
         } else {
-            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(playerName)}`, {
+            console.log("i'm here");
+            await fetch(`http://100.114.16.81:8008/api/player/${encodeURIComponent(playerName)}`, {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
                 },
             }).then(async response => {
+                console.log("i'm here 22");
                 if (!response.ok) {
                     if (response.status == 404) {
-                        await fetch('http://localhost:8080/api/player', {
+                        await fetch('http://100.114.16.81:8008/api/player', {
                             method: "POST",
                             headers: {
                                 'Content-Type': 'application/json',
@@ -128,7 +128,8 @@ function joinExistingGame() {
                         showError('Trò chơi đã bắt đầu, không thể tham gia!');
                         return;
                     } else {
-                        socket.emit('joinGame', { name: playerName, id });
+                        console.log("i'm here 2");
+                        socket.emit('joinGame', { name: playerName, id: id });
                     }
                 });
             })
@@ -147,7 +148,7 @@ function autoJoin() {
         if (data.message.includes(name)) {
             showError(`<b>Không thể tham gia!</b><br>${data.message}`);
         } else {
-            await fetch(`http://localhost:8080/api/player/${encodeURIComponent(name)}`, {
+            await fetch(`http://100.114.16.81:8008/api/player/${encodeURIComponent(name)}`, {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
@@ -155,15 +156,13 @@ function autoJoin() {
             }).then(async response => {
                 if (!response.ok) {
                     if (response.status == 404) {
-                        console.log("Đếch ổn");
-                        await fetch('http://localhost:8080/api/player', {
+                        await fetch('http://100.114.16.81:8008/api/player', {
                             method: "POST",
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({ username: name })
                         });
-                        console.log("Đã tạo");
                     }
                 }
             }).then(() => {
@@ -293,20 +292,88 @@ function collectPowerup(powerup) {
     socket.emit('getPowerup', powerup);
 }
 
+var kickWIP = false;
 function kickPlayer(id) {
     const playerGetter = document.getElementById(`player-${id}`).innerText;
     const roomId = document.querySelector('.roomId#owner').innerText;
-
     if (playerGetter && roomId) {
         socket.emit('kickPlayer', { name: playerGetter, room: roomId });
+        kickWIP = true;
     } else {
-        showError("Không có player")
+        showError("Không có người chơi")
     }
 }
 
 function setupSocketCListeners() {
     socketRegistry.on('invalidRoomId', (roomId) => {
-        alert(`ID phòng ${roomId} không tồn tại!`);
+        showError(`ID phòng ${roomId} không tồn tại!`);
+    });
+
+    socketRegistry.on('newHost', (data) => {
+        if (data.id === socket.id) {
+            // Là host mới, chuyển UI sang Create-room
+            document.getElementById('Create-room').classList.remove('hidden');
+            document.getElementById('Join-room').classList.add('hidden');
+            // Cập nhật lại các nút chức năng host nếu cần
+            const ownerText = document.querySelector('.owner');
+            if (ownerText) ownerText.innerText = 'Bạn là chủ phòng';
+            // Hiển thị lại danh sách player trong phòng chờ host
+            for (let i = 0; i < 4; i++) {
+                const playerBox = document.getElementById(`player-${i + 1}`);
+                const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+                if (playerBox) playerBox.innerText = '';
+                if (playerAvatar) playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+            }
+            if (data.players && data.players.length > 0) {
+                for (let i = 0; i < data.players.length; i++) {
+                    const player = data.players[i];
+                    const playerBox = document.getElementById(`player-${i + 1}`);
+                    const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
+                    if (playerBox) playerBox.innerText = player.name;
+                    if (playerAvatar) playerAvatar.src = `../Source/${player.color}_tank.png`;
+                }
+            }
+        }
+    })
+    socketRegistry.on('playerLeft', (data) => {
+        // Xóa player khỏi UI phòng chờ
+        if(kickWIP) {
+            showSuccess("<b>Thành công!</b><br>Đã đuổi người dùng");
+            kickWIP = false;
+        }
+        for (let i = 1; i <= 4; i++) {
+            const playerBox = document.getElementById(`player-${i}`);
+            const playerAvatar = document.getElementById(`player-avatar${i}`);
+            if (playerBox && playerBox.innerText === data.name) {
+                playerBox.innerText = '';
+                playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+            }
+            const playerBox2 = document.getElementById(`player-${i}${i}`);
+            const playerAvatar2 = document.getElementById(`player-avatar${i}${i}`);
+            const startButton = document.getElementById('start-btn');
+            if (playerBox2 && playerBox2.innerText === data.name) {
+                playerBox2.innerText = '';
+                playerAvatar2.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+            }
+
+            if(startButton) {
+                if(data.playerCount > 1) {
+                    startButton.innerText = `Bắt đầu ngay ${data.playerCount}/4`;
+                } else {
+                    document.querySelector('.start-text#owner').innerText = `Vui lòng chờ người chơi tham gia ...`;
+                    startButton.style = "display: none;"
+                }
+            }
+        }
+    });
+
+    socketRegistry.on('roomFull', (message) => {
+        showError(message);
+        // Đảm bảo không vào phòng, có thể reset UI nếu cần
+        document.getElementById('Create-room').classList.add('hidden');
+        document.getElementById('Join-room').classList.add('hidden');
+        document.getElementById('phaser-game-container').style.display = 'none';
+        document.getElementById('play').style.display = 'block';
     });
 
     socketRegistry.on('playerRoomCheck', (data) => {
@@ -319,18 +386,22 @@ function setupSocketCListeners() {
         if (data.message.includes("host")) {
             showError(data.message);
         } else if (data.message.includes("Bạn đã bị kick khỏi phòng")) {
-            console.log("Hả??")
-            roomId = null;
-            playerName = '';
-            isHost = false;
-            gameInProgress = false;
-            bulletCount = 5;
-            score = 0;
-
+            for (let i = 1; i <= 4; i++) {
+                const playerBox = document.getElementById(`player-${i}`);
+                const playerAvatar = document.getElementById(`player-avatar${i}`);
+                if (playerBox) playerBox.innerText = '';
+                if (playerAvatar) playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+                const playerBox2 = document.getElementById(`player-${i}${i}`);
+                const playerAvatar2 = document.getElementById(`player-avatar${i}${i}`);
+                if (playerBox2) playerBox2.innerText = '';
+                if (playerAvatar2) playerAvatar2.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+            }
+            
             document.getElementById('Create-room').classList.add('hidden');
             document.getElementById('Join-room').classList.add('hidden');
             document.getElementById('phaser-game-container').style.display = 'none';
             document.getElementById('play').style.display = 'block';
+            showError(data.message);
         }
     });
 
@@ -403,8 +474,8 @@ function setupSocketCListeners() {
         const player = data.player;
         isHost = data.player.isHost;
 
+        document.getElementById("playerCount").innerText = data.playerCount;
         if (data.playerCount > 1) {
-            // thực hiện query đến class start-text -> id owner
             const startText = document.querySelector(`.start-text#owner`);
             if (startText) {
                 startText.innerText = "";
@@ -414,7 +485,7 @@ function setupSocketCListeners() {
                 });
             }
             // Player load
-            for (let i = 0; i <= 3; i++) {
+            for (let i = 0; i < data.playerCount; i++) {
                 const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
                 const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
                 const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
@@ -430,15 +501,12 @@ function setupSocketCListeners() {
                             }
                         }
                     }
-                    if (i + 1 == data.playerCount) {
-                        break;
-                    }
                 }
             }
         }
 
         // Admin load
-        for (let i = 0; i <= 3; i++) {
+        for (let i = 0; i < data.playerCount; i++) {
             const playerBox = document.getElementById(`player-${i + 1}`);
             const playerBoxImage = document.getElementById(`player-box${i + 1}`);
             const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
@@ -455,111 +523,34 @@ function setupSocketCListeners() {
                     }
                 }
             }
-            if (i + 1 == data.playerCount) {
-                break;
-            }
         }
+    });
+
+    socketRegistry.on('spectateEnd', () => {
+        document.getElementById('phaser-game-container').style.display = 'none';
+        document.getElementById('Join-room').classList.add('hidden');
+        document.getElementById('Create-room').classList.add('hidden');
+        document.getElementById('play').style.display = 'block';
     });
 
     socketRegistry.on('spectateGameInProgress', (data) => {
         roomId = data.roomId;
         gameInProgress = true;
-
-        // Ẩn menu chọn phòng
         document.getElementById('play').style.display = 'none';
-
-        // Hiển thị Phaser game
+        document.getElementById('Join-room').classList.add('hidden');
+        document.getElementById('Create-room').classList.add('hidden');
         document.getElementById('phaser-game-container').style.display = 'block';
-
         document.getElementById('roomId').textContent = roomId;
     });
 
-    socketRegistry.on('sendRoom', (data) => {
-        roomId = data.roomId;
-        gameInProgress = data.gameInProgress;
-
-        for (const element of document.getElementsByClassName('roomId')) {
-            element.textContent = roomId;
-        }
-    });
-
-    socketRegistry.on('notAuthorized', (message) => {
-        alert(message);
-    });
-
-    socketRegistry.on('notEnoughPlayers', (message) => {
-        alert(message);
-    });
-
-    socketRegistry.on('newHost', (data) => {
-        if (data.id === socket.id) {
-            document.getElementById('Join-room').classList.add('hidden');
-            document.getElementById('Create-room').classList.remove('hidden');
-            isHost = true;
-            //Admin load
-            for (let i = 0; i < data.players.length; i++) {
-                const player = data.players[i];
-                const playerBox = document.getElementById(`player-${i + 1}`);
-                const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
-                if (playerBox) {
-                    playerBox.innerText = player.name;
-                    playerAvatar.src = `../Source/${player.color}_tank.png`;
-                }
-            }
-
-            //Player load
-            for (let i = 0; i < data.players.length; i++) {
-                console.log("[Admin load] Player:", data.players[i]);
-                const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
-                const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
-                const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
-
-                if (playerContainer) {
-                    if (playerBox) {
-                        playerAvatar.src = `../Source/${data.players[i].color}_tank.png`;
-                        playerBox.innerText = data.players[i].name;
-                    }
-                }
-            }
-        }
-    });
-
-    socketRegistry.on('playerLeft', (data) => {
-        // Player load
-        for (let i = 0; i <= 3; i++) {
-            console.log('[Player load] Player');
-            const playerContainer = document.getElementsByClassName(`player-formal${i + 1}${i + 1}`);
-            const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
-            const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
-
-            if (playerContainer) {
-                if (playerBox.innerText == data.name) {
-                    playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-                    playerBox.innerText = '';
-                }
-            }
-        }
-
-        // Admin load
-        for (let i = 0; i <= 3; i++) {
-            const playerBox = document.getElementById(`player-${i + 1}`);
-            const playerAvatar = document.getElementById(`player-avatar${i + 1}`);
-            const startBtn = document.getElementById('start-btn');
-
-            if (playerBox) {
-                if (playerBox.innerText == data.name) {
-                    playerAvatar.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
-                    playerBox.innerText = '';
-                }
-            }
-            if (data.playerCount > 1) {
-                startBtn.innerText = `Bắt đầu ngay ${data.playerCount}/4`;
-            } else {
-                // startBtn.remove();
-                const startText = document.querySelector(`.start-text#owner`);
-                startText.innerText = `Vui lòng chờ người chơi tham gia ...`;
-            }
-        }
+    socketRegistry.on('gameStart', (data) => {
+        gameInProgress = true;
+        // Ẩn phòng chờ
+        document.getElementById('Create-room').classList.add('hidden');
+        document.getElementById('Join-room').classList.add('hidden');
+        // Hiển thị container Phaser game
+        document.getElementById('phaser-game-container').style.display = 'block';
+        // Nếu là khán giả, có thể disable điều khiển ở socket-c.js
     });
 
     socketRegistry.on('renderMovement', (player) => {
@@ -582,34 +573,100 @@ function setupSocketCListeners() {
     socketRegistry.on('scoreUpdated', (data) => {
         if (data.id === socket.id) {
             score = data.score;
-            // scoreElement.textContent = score;
         }
 
         if (window.updateScore) {
             window.updateScore(data.id, data.score);
         }
-    }); socketRegistry.on('gameOver', async (data) => {
+    });
+    socketRegistry.on('gameOver', async (data) => {
         gameInProgress = false;
 
         if (window.endGame) {
             window.endGame(data);
         }
 
-        // Chỉ xử lý tạo Match nếu người chơi hiện tại là host
+        const winnerScreen = document.getElementById('winner-screen');
+        const winnerName = document.getElementById('winner-name');
+        const winnerScore = document.getElementById('winner-score');
+        const ggezPic = document.getElementById('lolez');
+        const winSound = document.getElementById('win-sound');
+        const owner = data.putSQL.players.find(player => player.id == socket.id);
+        ggezPic.innerText = ``;
+        winnerName.innerText = `🎉 ${data.winner.name} đã chiến thắng!`;
+        winnerScore.innerText = `Điểm số: ${data.winner.score}`;
+
+        winnerScreen.classList.remove('fade-out');
+        winnerScreen.classList.add('fade-in');
+        setTimeout(() => {
+            winnerScreen.style.display = 'flex';
+        }, 500);
+
+        if (winSound) {
+            winSound.currentTime = 0;
+            winSound.volume = 0.3;
+            winSound.play();
+        }
+
+        if (window.endGame) {
+            window.endGame(data);
+        }
+
+        setTimeout(() => {
+            winnerScreen.classList.remove('fade-in');
+            winnerScreen.classList.add('fade-out');
+            setTimeout(() => {
+                winnerScreen.style.display = 'none';
+            }, 500);
+        }, 9000)
+        setTimeout(() => {
+            document.getElementById('phaser-game-container').style.display = 'none';
+            if (owner) {
+                if (owner.isHost) {
+                    document.getElementById('Create-room').classList.remove('hidden');
+                } else {
+                    document.getElementById('Join-room').classList.remove('hidden');
+                }
+            }
+        }, 10000)
+
+        if (!owner) {
+            roomId = data.putSQL.match;
+
+            for (let i = 0; i < data.putSQL.players.length; i++) {
+                const player = data.putSQL.players[i];
+                const playerBox = document.getElementById(`player-${i + 1}${i + 1}`);
+                const playerAvatar = document.getElementById(`player-avatar${i + 1}${i + 1}`);
+
+                if (playerBox) {
+                    playerBox.innerText = player.name;
+                    playerAvatar.src = `../Source/${player.color}_tank.png`;
+                }
+            }
+
+            document.getElementById('play').style.display = 'none';
+            document.getElementById('phaser-game-container').style.display = 'none';
+            document.getElementById('Join-room').classList.remove('hidden');
+
+            document.getElementById('you-r-player').innerText = `Bạn là người xem`;
+            Array.from(document.getElementsByClassName('roomId')).forEach(element => {
+                element.innerText = data.putSQL.match;
+            });
+        }
         for (const player of data.putSQL.players) {
             if (player.isHost && player.id === socket.id) {
                 console.log("Host đang xử lý lưu kết quả trận đấu");
                 try {
-                    const playerResponse = await fetch(`http://localhost:8080/api/player/${encodeURIComponent(player.name)}`);
+                    const playerResponse = await fetch(`http://100.114.16.81:8008/api/player/${encodeURIComponent(player.name)}`);
                     const playerData = await playerResponse.json();
 
                     // Kiểm tra xem match đã tồn tại chưa
-                    const checkMatch = await fetch(`http://localhost:8080/api/matches/${roomId}`);
+                    const checkMatch = await fetch(`http://100.114.16.81:8008/api/matches/${roomId}`);
 
                     if (checkMatch.status === 404) {
                         console.log("Trận đấu chưa tồn tại, tạo mới");
                         // Match chưa tồn tại, tạo mới
-                        await fetch('http://localhost:8080/api/matches', {
+                        await fetch('http://100.114.16.81:8008/api/matches', {
                             method: "POST",
                             headers: {
                                 'Content-Type': 'application/json',
@@ -630,7 +687,7 @@ function setupSocketCListeners() {
                         });
                     } else {
                         console.log("Trận đấu đã tồn tại, cập nhật thông tin");
-                        await fetch(`http://localhost:8080/api/matches/${roomId}`, {
+                        await fetch(`http://100.114.16.81:8008/api/matches/${roomId}`, {
                             method: "PUT",
                             headers: {
                                 'Content-Type': 'application/json',
@@ -650,11 +707,11 @@ function setupSocketCListeners() {
                 }
             }
         }
-        setTimeout(async() => {
+        setTimeout(async () => {
             for (const player of data.putSQL.players) {
                 if (player.id == socket.id) {
                     const device = localStorage.getItem('tank-horizon-device-id');
-                    await fetch(`http://localhost:8080/api/player/${decodeURIComponent(player.name)}`)
+                    await fetch(`http://100.114.16.81:8008/api/player/${decodeURIComponent(player.name)}`)
                         .then(response => {
                             if (response.ok) {
                                 return response.json();
@@ -662,8 +719,7 @@ function setupSocketCListeners() {
                         }).then(async playerData => {
                             const kill = data.putSQL.players.find(player => player.id == socket.id).kill
                             const death = data.putSQL.players.find(player => player.id == socket.id).death
-
-                            await fetch('http://localhost:8080/api/matchResult', {
+                            await fetch('http://100.114.16.81:8008/api/matchresult', {
                                 method: "POST",
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -674,9 +730,9 @@ function setupSocketCListeners() {
                                     deviceId: device,
                                     username: player.name,
                                     kd: `${kill}/${death}`,
-                                    deviceName: navigator.userAgentData.platform || navigator.platform,
+                                    deviceName: navigator.platform,
                                     numRound: data.putSQL.round,
-                                    status: player.score >= 1000 ? "Victory" : "Defeat",
+                                    status: socket.id == data.winner.id ? "Thắng" : "Thua",
                                     score: player.score,
                                 })
                             });
@@ -684,7 +740,6 @@ function setupSocketCListeners() {
                 }
             }
         }, 1500)
-        showError(`Trò chơi kết thúc! ${data.winner.name} đã chiến thắng với điểm số ${data.winner.score}`);
     });
 
     socketRegistry.on('spectateMode', (data) => {
@@ -711,19 +766,6 @@ function setupSocketCListeners() {
         if (window.handleNewPowerup) {
             window.handleNewPowerup(powerup);
         }
-    });
-
-    // Thêm xử lý sự kiện khi game bắt đầu
-    socketRegistry.on('gameStart', (data) => {
-        gameInProgress = true;
-        console.log('Game started! Displaying Phaser game.');
-
-        // Ẩn phòng chờ
-        document.getElementById('Create-room').classList.add('hidden');
-        document.getElementById('Join-room').classList.add('hidden');
-
-        // Hiển thị container Phaser game
-        document.getElementById('phaser-game-container').style.display = 'block';
     });
 }
 
@@ -759,6 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('player-box4').addEventListener('click', () => {
         kickPlayer(4);
     });
+
+    document.getElementById('close-ingame').addEventListener('click', () => {
+        backToMenu();
+    })
 
     setupSocketCListeners();
 });

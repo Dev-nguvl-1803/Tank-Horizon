@@ -42,6 +42,7 @@ export class Room {
   private _io: Server;
   private _startTime: Date | null = null;
   private _endTime: Date | null = null;
+  private _runningSoon: boolean = false;
   private _settings: {
     maxPlayers: number;
     maxBullets: number;
@@ -59,13 +60,20 @@ export class Room {
     this._endTime = null;
   }
 
+  get runningSoon(): boolean {
+    return this._runningSoon;
+  }
+  set runningSoon(value: boolean) {
+    this._runningSoon = value;
+  }
+
   get startTime(): Date | null {
     return this._startTime;
   }
   set startTime(value: Date | null) {
     this._startTime = value;
   }
-  
+
   get endTime(): Date | null {
     return this._endTime;
   }
@@ -234,6 +242,13 @@ export class Room {
     };
   }
 
+  resetAll(): void {
+    this._round = 1;
+    for (const player of this.players) {
+      player.score = 0;
+    }
+  }
+
   removePowerup(id: string): void {
     const index = this._powerups.findIndex(p => p.id === id);
     if (index !== -1) {
@@ -245,7 +260,6 @@ export class Room {
   prepareNewGame(): void {
 
     if (this._isResetting) {
-      console.log('Reset already in progress, skipping...');
       return;
     }
 
@@ -257,7 +271,6 @@ export class Room {
     const newMap = this.generateRandomMap("ok");
     this._map = newMap;
 
-    // Reset số lượng bomb đã xuất hiện và kích hoạt lại powerupSpawner
     console.log(`Đặt bom thôi`)
     this._bombsSpawnedThisRound = 0;
     this.powerupSpawner();
@@ -267,7 +280,6 @@ export class Room {
       p.ready = false;
     }
 
-    // Emit drawBoard event to ensure map synchronization
     this._io.to(this._id).emit('prepareNewGame', {
       roomId: this._id,
       players: this._players.map(p => p.toJSON()),
@@ -281,7 +293,6 @@ export class Room {
 
     setTimeout(() => {
       this._isResetting = false;
-      console.log("Reset flag cleared");
     }, 1000);
   }
 
@@ -397,7 +408,8 @@ export class Room {
       highScorePlayer: this._highScorePlayer,
       map: this._map,
       gameInProgress: this._gameInProgress,
-      powerups: this._powerups
+      powerups: this._powerups,
+      runningSoon: this._runningSoon
     };
   }
 

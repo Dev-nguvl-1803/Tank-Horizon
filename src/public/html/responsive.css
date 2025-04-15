@@ -1,0 +1,69 @@
+@media screen and (min-width: 1201px) {     /* Desktop/Large Screens */
+    #phaser-game {
+        width: 680px;
+        height: 680px;
+    }
+    
+    #room-info {
+        font-size: 0.9vw;
+        position: fixed;
+        left: 1%;
+        top: 20%;
+    }
+    
+    #game-controls {
+        font-size: 0.9vw;
+        padding: 6px 12px;
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    #room-code-box, #status-box, #match-box {
+        font-size: 0.9vw;
+        padding: 8px 15px;
+        position: fixed;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1200px) {     /* Laptop/Small Desktop */
+    #phaser-game {
+        width: 600px;
+        height: 600px;
+    }
+    
+    #room-info {
+        font-size: 1.1vw;
+        top: 15%;
+    }
+    
+    #game-controls, #room-code-box, #status-box, #match-box {
+        font-size: 1.1vw;
+    }
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {     /* Tablet */
+    #phaser-game {
+        width: 450px;
+        height: 450px;
+    }
+    
+    #room-info {
+        font-size: 1.5vw;
+        top: 12%;
+        padding: 6px 10px;
+    }
+    
+    #game-controls {
+        font-size: 1.5vw;
+        padding: 6px 10px;
+        width: 90%;
+        text-align: center;
+    }
+    
+    #room-code-box, #status-box, #match-box {
+        font-size: 1.5vw;
+        padding: 6px 10px;
+    }
+}
