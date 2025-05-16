@@ -1,5 +1,7 @@
 # Một dự án thật (PRO230) - Đồ án Tốt nghiệp - Ngọt_SD1803
 
+## ⚠ DO NOT COMMIT TO MAIN BRANCH (team notice) ⚠
+- <img src="https://cdn.discordapp.com/emojis/1212816364461363210.webp?size=128">
 - Tank Horizon là một tựa game tương tự "Tank Trouble" hay "A Z" nhưng tất nhiên là hay hơn chúng
 
 # Tank Horizon (Website - Competitive Game)
